@@ -35,8 +35,10 @@ if(n!=m){
   output[["Models"]] <- myModel
   output[["f"]] <- StdErr$f
   output[["f.se"]] <- StdErr$f.se
+  output[["F.se"]] <- StdErr$F.se 
   output[["sigma"]] <- StdErr$sigma
   output[["Mack.S.E"]] <- StdErr$FullTriangle.se
+  output[["Total.Mack.S.E"]] <- TotalMack.S.E(FullTriangle, StdErr$f, StdErr$f.se, StdErr$F.se)  
   
   class(output) <- c("MackChainLadder", "TriangleModel", "list")
   return(output)
@@ -100,6 +102,28 @@ predict.TriangleModel <- function(object,...){
   	}
   return(list(sigma=sigma, f=f, f.se=f.se, FullTriangle.se=FullTriangle.se) )
   }
+
+################################################################################
+## Total reserve SE
+
+TotalMack.S.E <- function(FullTriangle,f, f.se, F.se){
+
+  C <- FullTriangle
+  n <- ncol(C)
+  m <- nrow(C)
+  
+  total.seR <- 0*c(1:(n))
+  
+  for(k in c(1:(n-1))){
+    total.seR[k+1] <- sqrt(total.seR[k]^2 * f[k]^2 +
+                           sum(C[c((m+1-k):m),k]^2 *
+                               (F.se[c((m+1-k):m),k]^2))
+                           + sum(C[c((m+1-k):m),k])^2 * f.se[k]^2 )
+  }
+  return(total.seR[length(total.seR)])
+}
+
+
 ##############################################################################
 # Summary
 #
@@ -125,7 +149,20 @@ summary.MackChainLadder <- function(object,...){
 # print 
 #
 print.MackChainLadder <- function(x,...){
-	print(format(summary(x), big.mark = ",", digits = 3),...)
+
+ res <- summary(x)
+ print(format(res, big.mark = ",", digits = 3),...)
+ Totals <-  c(sum(res$Latest,na.rm=TRUE), sum(res$Ultimate,na.rm=TRUE),
+               sum(res$Reserve,na.rm=TRUE), x[["Total.Mack.S.E"]],
+               x[["Total.Mack.S.E"]]/sum(res$Reserve,na.rm=TRUE)*100)
+  Totals <- formatC(Totals, big.mark=",",digit=0,format="f")
+  Totals <- as.data.frame(Totals)
+  colnames(Totals)=c("Totals:")
+  rownames(Totals) <- c("Sum of Latest:","Sum of CL-Ultimate:",
+                        "Sum of CL-Reserve:","Total Mack S.E.:",
+                        "Total S.E.% of Reserve:")
+  cat("\n")
+  print(Totals, quote=FALSE)
 
 	}
 
@@ -208,5 +245,4 @@ residuals.MackChainLadder <- function(object,...){
    return(na.omit(myResiduals))
    }
  
- 
- ## work on update
+

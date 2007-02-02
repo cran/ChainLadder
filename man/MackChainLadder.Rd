@@ -54,8 +54,10 @@ A tail factor is not yet implemented.
   \item{Models}{linear regression models for each development year}
   \item{f}{chain-ladder ratios}
   \item{f.se}{standard error for chain-ladder ratios}
+  \item{F.se}{standard error for individual age-to-age ratios}
   \item{sigma}{chain-ladder ratio variance}
-  \item{Mack.S.E}{Mack's estimated standard error}
+  \item{Mack.S.E}{Mack's estimated standard error for the reserves}
+  \item{Total.Mack.S.E}{Mack's estimated overall standard error for the reserves}
   
 }
 \references{
@@ -93,7 +95,7 @@ plot(GNI)
 data(RAA)
 RAA  
  
-MCL=MackChainLadder(RAA)
+MCL <- MackChainLadder(RAA)
 MCL
 plot(MCL)
  
@@ -119,8 +121,8 @@ plot(MCL)
  par(op)
 
  # change the model for dev. period one to the newModel
- MCL2=MCL
- MCL2[["Models"]][[1]] = newModel
+ MCL2 <- MCL
+ MCL2[["Models"]][[1]] <- newModel
  predict(MCL2) # predict the full triangle with the new model 
  #(only the last origin year will be affected)
 
