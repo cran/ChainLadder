@@ -78,8 +78,11 @@ predict.TriangleModel <- function(object,...){
   
   # estimate sigma[n-1] via log-linear regression
   dev=c(1:(n-2))
-  sigmaModel <- lm(log(sigma[-(n-1)]) ~ dev)
-  sigma[n-1] <- exp(predict(sigmaModel, newdata=data.frame(dev=(n-1))))
+  gn <- which(sigma>0)
+  .sigma <- sigma[gn]
+  .dev <- dev[gn]
+  sigmaModel <- lm(log(.sigma) ~ .dev)
+  sigma[n-1] <- exp(predict(sigmaModel, newdata=data.frame(.dev=(n-1))))
   
   f.se[n-1] = sigma[n-1]/sqrt(FullTriangle[1,n-1]) 
   
