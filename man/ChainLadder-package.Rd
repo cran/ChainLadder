@@ -27,7 +27,7 @@ License: \tab GPL version 2 or later\cr
 \author{
 Markus Gesmann
 
-Maintainer: Markus Gesmann <markus.gesmann@web.de>
+Maintainer: Markus Gesmann <markus.gesmann@gmail.com>
 }
 \references{
 Thomas Mack. Distribution-free calculation of the standard error of chain ladder reserve estimates. Astin Bulletin. Vol. 23. No 2. 1993. pp.213:225
@@ -40,7 +40,6 @@ Gerhard Quarg and Thomas Mack. Munich Chain Ladder. Blatter DGVFM 26, Munich, 20
 
 \examples{
 
- data(RAA)
  RAA  
 
  MCL=MackChainLadder(RAA)
@@ -49,9 +48,7 @@ Gerhard Quarg and Thomas Mack. Munich Chain Ladder. Blatter DGVFM 26, Munich, 20
 
 
  # Munich Chain Ladder
- data(MCLpaid)
  MCLpaid
- data(MCLincurred)
  MCLincurred
  
  MCL = MunichChainLadder(MCLpaid, MCLincurred)

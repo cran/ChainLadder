@@ -10,7 +10,7 @@
 }
 \source{Historical Loss Development, \emph{Reinsurance Association of Ammerica
     (RAA)}, \bold{1991}, p.96}
-\references{See Also: Which Stochastik Model is Underlying
+\references{See Also: Which Stochastic Model is Underlying
   the Chain Ladder Method?, Thomas Mack,  1994, \emph{Insurance
     Mathematics and Economics},  \bold{15, 2/3}, 133-138
 
@@ -19,7 +19,6 @@
   pp443-544, 2002
 }
 \examples{
-data(RAA)
 RAA
 matplot(t(RAA), type="l")
 }
