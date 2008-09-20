@@ -3,17 +3,18 @@
 \alias{MCLincurred}
 \docType{data}
 \title{Run off triangles of accumulated paid and incurred claims data.}
-\description{Run-off triangles of Automatic Factultative business in General
-  Liability}
-\usage{data(MCLpaid)
+\description{Run-off triangles based on a fire portfolio}
+\usage{data(MCLpaid); data(MCLincurred)
 data(MCLincurred)}
 \format{
   A matrix with 7 origin years and 7 development years.
 }
 \source{
-  Gerhard Quarg and Thomas Mack. Munich Chain Ladder. Blatter DGVFM 26,
-  Munich, 2004. 
+  \cite{
+    Gerhard Quarg and Thomas Mack. Munich Chain Ladder. \emph{Blatter DGVFM}. 26,
+    Munich, 2004.
   }
+}
 \examples{
 MCLpaid
 MCLincurred
