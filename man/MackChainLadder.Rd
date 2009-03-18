@@ -3,13 +3,13 @@
 
 \title{ Mack-Chain-Ladder Model }
 \description{
-  The Mack-chain-ladder model forecasts IBNR (Incurred But Not Reported)
+  The Mack-chain-ladder model forecasts reserves or IBNR (Incurred But Not Reported)
   claims based on a cumulative claims development triangle and estimates
   the standard error around it.
 }
 \usage{
-MackChainLadder(Triangle, weights = 1/Triangle,
-tail=FALSE, est.sigma="log-linear")
+MackChainLadder(Triangle, weights = 1/Triangle, est.sigma="log-linear",
+tail=FALSE, tail.se=NULL, tail.sigma=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,21 +20,33 @@ tail=FALSE, est.sigma="log-linear")
     origin period frequency (e.g accident years).}
   \item{weights}{ weights. Default: 1/Triangle, to use volume weighted
     chain ladder factors.} 
+  \item{est.sigma}{defines how to estimate \eqn{sigma_{n-1}}, the
+    variability of the individual age-to-age factors at development time
+    \eqn{n-1}.
+    Default is "log-linear" for a log-linear regression, "Mack" for
+    Mack's approximation from his 1999 paper. Alternatively the user can
+    provide a numeric value.}  
   \item{tail}{can be logical or a numeric value.
     If \code{tail=FALSE} no tail factor will be applied, if \code{tail=TRUE} 
-    a tail factor will be estimate via a linear extrapolation of
+    a tail factor will be estimated via a linear extrapolation of
     \eqn{log(chain ladder factors - 1)}, if \code{tail} is a numeric
-    value than this value will be used as tail factor. }
-  \item{est.sigma}{defines how to estimate \eqn{sigma_{n-1}}.
-    Default is "log-linear" for a log-linear regression, "Mack" for
-    Mack's approximation from his 1999 paper, or if a numeric value is
-    given it will be used instead.}  
+    value than this value will be used as tail factor.}
+  \item{tail.se}{defines how to estimate the standard error of the tail factor. Only needed if
+    a tail factor > 1 is provided. Default is \code{NULL}. If \code{tail.se} is \code{NULL},
+    \code{tail.se} is estimated via "log-linear" regression, if \code{tail.se} is a numeric
+    value than this value will be used instead.}  
+  \item{tail.sigma}{defines how to estimate individual tail variability. Only needed if
+      a tail factor > 1 is provided.
+    Default is \code{NULL}. If \code{tail.sigma} is \code{NULL},
+    \code{tail.sigma} 
+    is estimated via "log-linear" regression, if \code{tail.sigma} is a numeric
+    value than this value will be used instead}  
 }
 \details{
   Following Mack's 1999 paper let \eqn{C_{ik}} denote the cumulative loss amounts of origin period
   (e.g. accident year) 
   \eqn{i=1,\ldots,m}, with losses known for development period
-  (e.g. development year) \eqn{k \leq n+1-i}.
+  (e.g. development year) \eqn{k \le n+1-i}.
   In order to forecast the amounts \eqn{C_{ik}} for
   \eqn{k > n+1-i} the Mack chain-ladder-model assumes:
   \deqn{\mbox{CL1: }  E[ F_{ik}| C_{i1},C_{i2},\ldots,C_{ik} ] = f_k
@@ -113,31 +125,10 @@ tail=FALSE, est.sigma="log-linear")
   \code{\link{MunichChainLadder}},
   \code{\link{BootChainLadder}},
 }
+% sqrt(5608^2*(0.03^2+0.02^2)+140^2*1.05^2)
+% sqrt(MRT$FullTriangle[3,9]^2 * (MRT$F.se[3,9]^2 + MRT$f.se[9]^2) + MRT$Mack.S.E[3,9]^2*MRT$f[9]^2)
+
 \examples{
-
-# See the example in Mack's 1999 paper
-Mortgage
-MRT <- MackChainLadder(Mortgage, est.sigma="Mack", tail=1.05)
-MRT
-# Table 1
-MRT$f
-MRT$f.se
-MRT$F.se[3,]
-MRT$sigma
-plot(MRT) # We observe trends along calendar years.
-
-# Access process risk error
-MRT$Mack.ProcessRisk
-
-# Access parameter risk error
-MRT$Mack.ParameterRisk
-
-op <- par(mfrow=c(2,1))
-plot(with(summary(MRT)$ByOrigin, Mack.S.E/Ultimate),t="l",
-ylab="CV(Ultimate)", xlab="origin period")
-plot(summary(MRT)$ByOrigin[["CV(IBNR)"]], t="l", ylab="CV(IBNR)",
-xlab="origin period")
-par(op)
 
 # See the Taylor/Ashe example in Mack's 1993 paper
 GenIns
@@ -146,10 +137,39 @@ GNI$f
 GNI$sigma^2
 GNI # compare to table 2 and 3 in Mack's 1993 paper
 plot(GNI)
-## Include a tail factor
-GNIt <- MackChainLadder(GenIns, est.sigma="Mack", tail=TRUE)
-## Extract more information on the tail factor
-GNIt$tail 
+
+# See the example in Mack's 1999 paper
+Mortgage
+MRT <- MackChainLadder(Mortgage, tail=1.05, tail.sigma=71, tail.se=0.02, est.sigma="Mack")
+MRT
+# Table 1 in the above paper
+MRT$f
+MRT$f.se
+MRT$F.se[3,]
+MRT$sigma
+plot(MRT) # We observe trends along calendar years.
+
+# Table 2 in the above paper
+MRT$FullTriangle[,9]/1000 ## C_{i9}
+MRT$FullTriangle[,10]/1000 ## C_{i,ult}
+MRT$Mack.S.E[,9]/1000 ## s.e.(C_{i9}), difference due to roundings
+
+# Access process risk error
+MRT$Mack.ProcessRisk
+
+# Access parameter risk error
+MRT$Mack.ParameterRisk
+
+# Total risk
+MRT$Mack.S.E
+
+op <- par(mfrow=c(2,1))
+plot(with(summary(MRT)$ByOrigin, Mack.S.E/Ultimate),t="l",
+ylab="CV(Ultimate)", xlab="origin period")
+plot(summary(MRT)$ByOrigin[["CV(IBNR)"]], t="l", ylab="CV(IBNR)",
+xlab="origin period")
+par(op)
+
   
 # This data set is discussed many papers, e.g. England and Verall 2000
 # paper, see Table 1 just there  
