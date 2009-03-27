@@ -2,8 +2,8 @@ Package: ChainLadder
 Type: Package
 Title: Mack-, Bootstrap and Munich-chain-ladder methods for insurance
         claims reserving
-Version: 0.1.2-10
-Date: 2009-03-18
+Version: 0.1.2-11
+Date: 2009-03-27
 Author: Markus Gesmann
 Maintainer: Markus Gesmann <markus.gesmann@gmail.com>
 Description: The package contains the Mack-, Munich-, and Bootstrap
@@ -13,6 +13,6 @@ Depends: Hmisc, lattice, stats
 License: GPL (>= 2)
 URL: http://code.google.com/p/chainladder/
 LazyData: yes
-Packaged: Thu Mar 26 22:34:51 2009; Markus
+Packaged: Fri Mar 27 22:09:37 2009; Markus
 Repository: CRAN
-Date/Publication: 2009-03-27 08:10:19
+Date/Publication: 2009-03-28 10:20:28
