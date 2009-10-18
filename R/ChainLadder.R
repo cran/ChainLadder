@@ -3,23 +3,48 @@
 ## Date:19/09/2008
 
 
-ChainLadder <- function(Triangle, weights=1/Triangle){
+chainladder <- function(Triangle, weights=1,
+                        delta=1){
 
     Triangle <- checkTriangle(Triangle)
-
     n <- dim(Triangle)[2]
 
+
+    ## Mack uses alpha between 0 and 2 to distinguish
+    ## alpha = 0 ordinary regression with intercept 0
+    ## alpha = 1 historical chain ladder age-to-age factors
+    ## alpha = 2 straight averages
+
+    ## However, in Zehnwirth & Barnett they use the notation of delta, whereby delta = 2 - alpha
+    ## the delta is than used in a linear modelling context.
+
+    weights <- checkWeights(weights, Triangle)
+    delta <- rep(delta,(n-1))[1:(n-1)]
 
     myModel <- vector("list", (n-1))
     for(i in c(1:(n-1))){
         ## weighted linear regression through origin
         dev.data <- data.frame(x=Triangle[,i], y=Triangle[,i+1])
-  	myModel[[i]] <- lm(y~x+0, weights=weights[,i], data=dev.data)
+  	myModel[[i]] <- lm(y~x+0, weights=weights[,i]/Triangle[,i]^delta[i], data=dev.data)
     }
 
-    output <- list(Models=myModel, Triangle=Triangle)
+    output <- list(Models=myModel, Triangle=Triangle, delta=delta, weights=weights)
     class(output) <- c("ChainLadder", "TriangleModel", class(output))
     return(output)
+}
+
+checkWeights <- function(weights, Triangle){
+
+    if(is.null(dim(weights))){
+        if(length(weights)==1){
+            my.weights <- Triangle
+            my.weights[!is.na(Triangle)] <- weights
+            weights <- my.weights
+        }
+    }
+
+return(weights)
+
 }
 
 
@@ -34,10 +59,16 @@ predict.TriangleModel <- function(object,...){
     FullTriangle <- object[["Triangle"]]
 
     for(j in c(1:(n-1))){
-        FullTriangle[c((m-j+1):m), j+1] <- predict(object[["Models"]][[j]],
-                                                   newdata=data.frame(x=FullTriangle[c((m-j+1):m), j]),...)
+        i <- which(is.na(FullTriangle[, j+1]))
+        FullTriangle[i, j+1] <- predict(object[["Models"]][[j]],
+                                                   newdata=data.frame(x=FullTriangle[i, j]),...)
+
     }
     return(FullTriangle)
+}
+
+predict.ChainLadder <- function(object,...){
+    predict.TriangleModel(object,...)
 }
 
 ################################################################################
@@ -54,7 +85,7 @@ tailfactor <- function (clratios){
         n <- length(f)
         tail.model <- lm(log(f - 1) ~ fn)
         co <- coef(tail.model)
-        tail <- exp(co[1] + c(n:(n + 100)) * co[2]) + 1
+        tail <- exp(co[1] + c((n+1):(n + 100)) * co[2]) + 1
         tail <- prod(tail)
         if (tail > 2){
             print("The estimate tail factor was bigger than 2 and has been reset to 1.")
@@ -70,6 +101,7 @@ tailfactor <- function (clratios){
 
 
 checkTriangle <- function(Triangle){
+
     ## if a triangle is an array with 3 dimension convert it into a matrix
     .dim <- dim(Triangle)
     if(length(.dim)>3){
@@ -88,8 +120,10 @@ checkTriangle <- function(Triangle){
     if(length(.dim)==3 & .dim[3]==1){
         dim(Triangle) <- c(m,n)
     }
-    if(class(Triangle)=="data.frame"){
+
+    if("data.frame" %in% class(Triangle)){
         Triangle <- as.matrix(Triangle)
+        Triangle <- as.triangle(Triangle)
     }
 
     tri.dimnames <- dimnames(Triangle)

@@ -10,15 +10,16 @@ BootChainLadder(Triangle, R = 999, process.distr=c("gamma", "od.pois"))
 }
 
 \arguments{
-  \item{Triangle}{cumulative claims triangle.  A (mxn)-matrix \eqn{C_{ik}} 
-    which is filled for \eqn{k \le n+1-i; i=1,\ldots,m; m\ge n }, see
+  \item{Triangle}{cumulative claims triangle. Assume columns are the development
+	period, use transpose otherwise.  A (mxn)-matrix \eqn{C_{ik}} 
+    which is filled for \eqn{k \le n+1-i; i=1,\ldots,m; m\ge n }. See
     \code{\link{qpaid}} for how to use (mxn)-development triangles with
     m<n, say higher development period frequency (e.g quarterly) than
     origin period frequency (e.g accident years).}
   \item{R}{the number of bootstrap replicates.}
   \item{process.distr}{ character string indicating which process
     distribution to be assumed. One of "gamma" (default), 
-    or "od.pois" (overdispersed Poisson), can be abbreviated}
+    or "od.pois" (over-dispersed Poisson), can be abbreviated}
 }
 \details{
   The \code{BootChainLadder} function uses a two-stage
@@ -47,7 +48,7 @@ BootChainLadder(Triangle, R = 999, process.distr=c("gamma", "od.pois"))
   \item{IBNR.Totals}{vector of R samples of the total IBNRs}
   \item{ChainLadder.Residuals}{adjusted Pearson chain-ladder residuals}
   \item{process.distr}{assumed process distribution}
-  \item{R}{number of bootstraps}
+  \item{R}{the number of bootstrap replicates}
 }
 \references{
   \cite{England, PD and Verrall, RJ. Stochastic Claims Reserving in
@@ -58,13 +59,13 @@ BootChainLadder(Triangle, R = 999, process.distr=c("gamma", "od.pois"))
     bootstrap predictive models, \emph{Insureware technical report}. 2007}
 }
 \author{ Markus Gesmann, \email{markus.gesmann@gmail.com} }
-\note{ The implimentation of \code{BootChainLadder} follows closely the
+\note{ The implementation of \code{BootChainLadder} follows closely the
   discussion of the bootstrap model in section 8 and appendix 3 of the
-  paper by England and Verall.
+  paper by England and Verrall (2002).
 }
-\seealso{ See also   \code{\link{summary.BootChainLadder}}, \code{\link{MackChainLadder}} }
+\seealso{ See also   \code{\link{summary.BootChainLadder}}, \code{\link{plot.BootChainLadder}} }
 \examples{
-# See as well the example in section 8 of England & Verrall's paper on page 55.
+# See also the example in section 8 of England & Verrall (2002) on page 55.
 
 B <- BootChainLadder(RAA, R=999, process.distr="gamma")
 B
@@ -81,7 +82,7 @@ fit <- fitdistr(B$IBNR.Totals[B$IBNR.Totals>0], "lognormal")
 fit
 curve(plnorm(x,fit$estimate["meanlog"], fit$estimate["sdlog"]), col="red", add=TRUE)
 
-# See as well the ABC example in the Barnett and Zehnwirth paper
+# See also the ABC example in  Barnett and Zehnwirth (2007) 
 A <- BootChainLadder(ABC, R=999, process.distr="gamma")
 A
 plot(A, log=TRUE)

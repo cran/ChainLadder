@@ -26,7 +26,11 @@ getMCLResiduals <- function(res, n){
 ##############################################################################
 ## Munich Chain Ladder
 ##
-MunichChainLadder <- function(Paid, Incurred, est.sigmaP="log-linear", est.sigmaI="log-linear", tailP=FALSE, tailI=FALSE){
+MunichChainLadder <- function(Paid, Incurred,
+                              est.sigmaP="log-linear",
+                              est.sigmaI="log-linear",
+                              tailP=FALSE,
+                              tailI=FALSE){
 
     if(!all(dim(Paid) == dim(Incurred)))
  	stop("Paid and Incurred triangle must have same dimension.\n")
@@ -48,7 +52,7 @@ MunichChainLadder <- function(Paid, Incurred, est.sigmaP="log-linear", est.sigma
         q.f[s] <- summary(myQModel[[s]])$coef[1]
 	rhoI.sigma[s] <- summary(myQModel[[s]])$sigma
     }
-    rhoI.sigma <-  estimate.sigma(rhoI.sigma)
+    rhoI.sigma <-  estimate.sigma(rhoI.sigma)$sigma
 
     myQinverseModel <- vector("list", n)
     qinverse.f <- rep(1,n)
@@ -61,20 +65,19 @@ MunichChainLadder <- function(Paid, Incurred, est.sigmaP="log-linear", est.sigma
 	qinverse.f[s] = summary(myQinverseModel[[s]])$coef[1]
 	rhoP.sigma[s] = summary(myQinverseModel[[s]])$sigma
     }
-    rhoP.sigma <- estimate.sigma(rhoP.sigma)
+    rhoP.sigma <- estimate.sigma(rhoP.sigma)$sigma
 
     ## Estimate the residuals
 
     Paidf <-  t(matrix(rep(MackPaid$f[-n],(m-1)), ncol=(m-1)))
     PaidSigma <- t(matrix(rep(MackPaid$sigma,(m-1)), ncol=(m-1)))
     PaidRatios <- Paid[-m,-1]/Paid[-m,-n]
-    PaidResiduals <- (PaidRatios - Paidf)/PaidSigma * sqrt(Paid[-m,-n])
+    PaidResiduals <- (PaidRatios - Paidf)/PaidSigma[, 1:ncol(Paidf)] * sqrt(Paid[-m,-n])
 
     Incurredf <-  t(matrix(rep(MackIncurred$f[-n],(m-1)), ncol=(m-1)))
     IncurredSigma <- t(matrix(rep(MackIncurred$sigma,(m-1)), ncol=(m-1)))
     IncurredRatios <- Incurred[-m,-1]/Incurred[-m,-n]
-    IncurredResiduals <- (IncurredRatios - Incurredf)/IncurredSigma * sqrt(Incurred[-m,-n])
-
+    IncurredResiduals <- (IncurredRatios - Incurredf)/IncurredSigma[,1:ncol(Incurredf)] * sqrt(Incurred[-m,-n])
 
     QRatios <- (Paid/Incurred)[,-n]
     Qf <- t(matrix(rep(q.f[-n],m), ncol=m))
@@ -100,30 +103,35 @@ MunichChainLadder <- function(Paid, Incurred, est.sigmaP="log-linear", est.sigma
 
 
     ## Recursive Munich Chain Ladder Forumla
-    FullPaid <- Paid
-    FullIncurred <- Incurred
-    for(j in c(1:(n-1))){
+    FullPaid <- cbind(Paid, rep(NA,m))
+    FullIncurred <- cbind(Incurred, rep(NA,m))
+
+    for(j in c(1:(n))){
         for(i in c((n-j+1):m) ){
             ## Paid
             mclcorrection <- lambdaP*MackPaid$sigma[j]/rhoP.sigma[j]*(
                                                                       FullIncurred[i,j]/FullPaid[i,j]-qinverse.f[j]
                                                                       )
+            mclcorrection <- ifelse(!is.na(mclcorrection),mclcorrection,0)
             FullPaid[i,j+1] = FullPaid[i,j] * (MackPaid$f[j] + mclcorrection)
             ## Incurred
             mclcorrection <- lambdaI*MackIncurred$sigma[j]/rhoI.sigma[j]*(
                                                                           FullPaid[i,j]/FullIncurred[i,j]-q.f[j]
                                                                           )
+            mclcorrection <- ifelse(!is.na(mclcorrection),mclcorrection,0)
+
             FullIncurred[i,j+1] = FullIncurred[i,j] * (MackIncurred$f[j] + mclcorrection)
 
         }
     }
 
+
     output <- list()
     output[["call"]] <-  match.call(expand.dots = FALSE)
     output[["Paid"]] <- Paid
     output[["Incurred"]] <- Incurred
-    output[["MCLPaid"]] <- FullPaid
-    output[["MCLIncurred"]] <- FullIncurred
+    output[["MCLPaid"]] <- FullPaid[,c(1:(n-1), n+1)]
+    output[["MCLIncurred"]] <- FullIncurred[,c(1:(n-1), n+1)]
     output[["MackPaid"]] <- MackPaid
     output[["MackIncurred"]] <- MackIncurred
     output[["PaidResiduals"]] <-  PaidResiduals
@@ -166,8 +174,8 @@ summary.MunichChainLadder <- function(object,...){
         LatestIncurred <- getCurrent(.Incurred)
     }
 
-    UltimatePaid = object[["MCLPaid"]][,n]
-    UltimateIncurred = object[["MCLIncurred"]][,n]
+    UltimatePaid = object[["MCLPaid"]][,ncol(object[["MCLPaid"]])]
+    UltimateIncurred = object[["MCLIncurred"]][,ncol(object[["MCLIncurred"]])]
 
     ex.origin.period <- !is.na(LatestIncurred)
 

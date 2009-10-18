@@ -6,7 +6,8 @@
 ## Date:22/03/2009
 
 MackChainLadder <- function(Triangle,
-                            weights=1/Triangle,
+                            weights=1,
+                            alpha=1,
                             est.sigma="log-linear",
                             tail=FALSE,
                             tail.se=NULL,
@@ -21,13 +22,25 @@ MackChainLadder <- function(Triangle,
     n <- dim(Triangle)[2]
 
     ## Create chain ladder models
-    myModel <- ChainLadder(Triangle, weights)$Models
+
+    ## Mack uses alpha between 0 and 2 to distinguish
+    ## alpha = 0 ordinary regression with intercept 0
+    ## alpha = 1 historical chain ladder age-to-age factors
+    ## alpha = 2 straight averages
+
+    ## However, in Zehnwirth & Barnett they use the notation of delta, whereby delta = 2 - alpha
+    ## the delta is than used in a linear modelling context.
+    delta <- 2-alpha
+    CL <- chainladder(Triangle, weights=weights, delta=delta)
+    alpha <- 2 - CL$delta
 
     ## Predict the chain ladder model
-    FullTriangle <- predict.TriangleModel(list(Models=myModel, Triangle=Triangle))
+    FullTriangle <- predict.TriangleModel(list(Models=CL[["Models"]], Triangle=Triangle))
 
     ## Estimate the standard error for f and F
-    StdErr <- Mack.S.E(myModel, FullTriangle, est.sigma=est.sigma)
+    StdErr <- Mack.S.E(CL[["Models"]], FullTriangle, est.sigma=est.sigma,
+                       weights=CL[["weights"]], alpha=alpha)
+
     Total.SE <- TotalMack.S.E(FullTriangle, StdErr$f, StdErr$f.se, StdErr$F.se)
 
     ## Check for tail factor
@@ -64,7 +77,7 @@ MackChainLadder <- function(Triangle,
     output[["call"]] <-  match.call(expand.dots = FALSE)
     output[["Triangle"]] <- Triangle
     output[["FullTriangle"]] <- FullTriangle
-    output[["Models"]] <- myModel
+    output[["Models"]] <- CL[["Models"]]
     output[["f"]] <- StdErr$f
     output[["f.se"]] <- StdErr$f.se
     output[["F.se"]] <- StdErr$F.se
@@ -72,9 +85,10 @@ MackChainLadder <- function(Triangle,
     output[["Mack.ProcessRisk"]]   <- StdErr$FullTriangle.procrisk  # new dmm
     output[["Mack.ParameterRisk"]] <- StdErr$FullTriangle.paramrisk  # new dmm
     output[["Mack.S.E"]] <- sqrt(StdErr$FullTriangle.procrisk^2 +StdErr$FullTriangle.paramrisk^2)
-
-
-    output[["Total.Mack.S.E"]] <- Total.SE#[length(Total.SE)]
+    output[["weights"]] <- CL$weights
+    output[["alpha"]] <- alpha
+    ## total.procrisk <- apply(StdErr$FullTriangle.procrisk, 2, function(x) sqrt(sum(x^2)))
+    output[["Total.Mack.S.E"]] <- Total.SE
     output[["tail"]] <- tail
     class(output) <- c("MackChainLadder", "TriangleModel", "list")
     return(output)
@@ -85,7 +99,7 @@ MackChainLadder <- function(Triangle,
 ## mean squared error = stochastic error (process variance) + estimation error
 ## standard error = sqrt(mean squared error)
 
-Mack.S.E <- function(MackModel, FullTriangle, est.sigma="loglinear"){
+Mack.S.E <- function(MackModel, FullTriangle, est.sigma="log-linear", weights, alpha){
     n <- ncol(FullTriangle)
     m <- nrow(FullTriangle)
     f <- rep(1,n)
@@ -98,30 +112,43 @@ Mack.S.E <- function(MackModel, FullTriangle, est.sigma="loglinear"){
     sigma[1:(n-1)] <- sapply(MackModel, function(x) summary(x)$sigma)
 
     isna <- is.na(sigma)
+    ## Think about weights!!!
 
     if(est.sigma %in% "log-linear"){
         ## estimate sigma[n-1] via log-linear regression
-        sigma <- estimate.sigma(sigma)
-        f.se[isna] <- sigma[isna]/sqrt(FullTriangle[1,isna])
+        sig.model <- estimate.sigma(sigma)
+        sigma <- sig.model$sigma
+
+        p.value.of.model <- summary(sig.model$model)$coefficient[2,4]
+        if(p.value.of.model > 0.05){
+            warning(paste("'loglinear' model to estimate sigma_n doesn't appear appropriate.",
+                          "\np-value > 5.\n",
+                          "est.sigma will be overwritten to 'Mack'.\n",
+                          "Mack's estimation method will be used instead."))
+
+            est.sigma <- "Mack"
+        }else{
+            f.se[isna] <- sigma[isna]/sqrt(weights[1,isna]*FullTriangle[1,isna]^alpha[isna])
+        }
     }
     if(est.sigma %in% "Mack"){
         for(i in which(isna)){   # usually i = n - 1
             sigma[i] <- sqrt(abs(min((sigma[i - 1]^4/sigma[i - 2]^2),
                                      min(sigma[i - 2]^2, sigma[i - 1]^2))))
-            f.se[i] <- sigma[i]/sqrt(FullTriangle[1,i])
+            f.se[i] <- sigma[i]/sqrt(weights[1,i]*FullTriangle[1,i]^alpha[i])
         }
     }
     if(is.numeric(est.sigma)){
         for(i in seq(along=est.sigma)){
             l <- length(est.sigma)
             sigma[n-i] <- est.sigma[l-i+1]
-            f.se[n-i] <- sigma[n-i]/sqrt(FullTriangle[1,n-i])
+            f.se[n-i] <- sigma[n-i]/sqrt(weights[1,n-i]*FullTriangle[1,n-i]^alpha[n-i])
         }
     }
 
-
-    F.se <- t(t(1/sqrt(FullTriangle)[,-n])*(sigma))
-
+    W <- weights
+    W[is.na(W)] <- 1
+    F.se <- t(sigma/t(sqrt(W[,-n]*t(t(FullTriangle[,-n])^alpha[-n]))))
 
     return(list(sigma=sigma,
                 f=f,
@@ -160,7 +187,6 @@ MackRecursive.S.E <- function(FullTriangle, f, f.se, F.se){
 
      if(f[nn] > 1){ ## tail factor > 1
         k <- nn
-        print(k)
         Tail.procrisk <- sqrt(
                               FullTriangle[,k]^2*(F.se[,k]^2)
                               + FullTriangle.procrisk[,k]^2*f[k]^2)
@@ -208,7 +234,8 @@ estimate.sigma <- function(sigma){
         my.model <- lm(log(sigma[my.dev]) ~ my.dev)
         sigma[is.na(sigma)] <- exp(predict(my.model, newdata=data.frame(my.dev=dev[is.na(sigma)])))
     }
-    return(sigma)
+
+    return(list(sigma=sigma, model=my.model))
 }
 
 
@@ -220,6 +247,9 @@ tail.SE <- function(FullTriangle, StdErr, Total.SE, tail.factor, tail.se=NULL, t
     m <- nrow(FullTriangle)
 
     FullTriangle <- cbind(FullTriangle, FullTriangle[,n] * tail.factor)
+    dimnames(FullTriangle) <- list(origin=dimnames(FullTriangle)[[1]],
+                                   dev=c(dimnames(FullTriangle)[[2]][1:n], "Inf"))
+
     StdErr$f[n] <- tail.factor
 
     ## Idea: linear model for f, estimate dev for tail factor
@@ -264,12 +294,7 @@ tail.SE <- function(FullTriangle, StdErr, Total.SE, tail.factor, tail.se=NULL, t
 ##
 summary.MackChainLadder <- function(object,...){
     ## Summarise my results
-    .Triangle <- object[["Triangle"]]
-    n <- ncol(.Triangle)
-    m <- nrow(.Triangle)
-
-    dim(.Triangle) <- c(dim(.Triangle),1)
-    Latest <- as.vector(getLatest(getIncremental(.Triangle)))
+    Latest <- getLatestCumulative(object$Triangle)
 
     ex.origin.period <- Latest!=0
 
@@ -299,6 +324,16 @@ summary.MackChainLadder <- function(object,...){
     return(output)
 }
 
+getLatestCumulative <- function(cumulative.tri) {
+  # Return the latest diagonal as a vector from a cumulative triangle
+  available.indicies <- apply(!is.na(cumulative.tri), 1, which)
+  latest.indicies <- sapply(available.indicies, function(x) ifelse(length(x)>1, max(x), 1) )
+  if (any(latest.indicies < 1))
+    stop("Some year (row) has no available losses")
+  return(cumulative.tri[cbind(1:nrow(cumulative.tri), latest.indicies)])
+}
+
+
 ##############################################################################
 ## print
 ##
@@ -321,62 +356,94 @@ print.MackChainLadder <- function(x,...){
 ################################################################################
 ## plot
 ##
-plot.MackChainLadder <- function(x, mfrow=c(3,2), title=NULL,...){
+plot.MackChainLadder <- function(x, mfrow=c(3,2), title=NULL,lattice=FALSE,...){
 
-    if(is.null(title)) myoma <- c(0,0,0,0) else myoma <- c(0,0,2,0)
-
-    op=par(mfrow=mfrow, oma=myoma)
 
     .myResult <-  summary(x)$ByOrigin
 
     .FullTriangle <- x[["FullTriangle"]]
     .Triangle <- x[["Triangle"]]
 
-    plotdata <- t(as.matrix(.myResult[,c("Latest","IBNR")]))
-    n <- ncol(plotdata)
-    bp <- barplot(plotdata,
-                  legend.text=c("Latest","IBNR"),
-                  names.arg=rownames(.myResult),
-                  main="Mack Chain Ladder Results",
-                  xlab="Origin period",
-                  ylab="Amounts",#paste(Currency,myUnit),
-                  ylim=c(0, max(apply(.myResult[c("Ultimate", "Mack.S.E")],1,sum),na.rm=TRUE)))
+    if(!lattice){
+        if(is.null(title)) myoma <- c(0,0,0,0) else myoma <- c(0,0,2,0)
 
-                                        # add error ticks
-    require("Hmisc")
-    errbar(x=bp, y=.myResult$Ultimate,
-           yplus=(.myResult$Ultimate + .myResult$Mack.S.E),
-           yminus=(.myResult$Ultimate - .myResult$Mack.S.E),
-           cap=0.05,
-           add=TRUE)
+        op=par(mfrow=mfrow, oma=myoma, mar=c(4.5,4.5,2,2))
 
-    matplot(t(.FullTriangle), t="l",
-            main="Chain ladder developments by origin period",
-            xlab="Development period",
-            ylab="Amounts", #paste(Currency, myUnit)
-            )
-    matplot(t(.Triangle), add=TRUE)
+        plotdata <- t(as.matrix(.myResult[,c("Latest","IBNR")]))
+        n <- ncol(plotdata)
 
-    Residuals=residuals(x)
-    plot(standard.residuals ~ fitted.value, data=Residuals,
-         ylab="Standardised residuals", xlab="Fitted")
-    lines(lowess(Residuals$fitted.value, Residuals$standard.residuals), col="red")
-    abline(h=0, col="grey")
-    plot(standard.residuals ~ origin.period, data=Residuals,
-         ylab="Standardised residuals", xlab="Origin period")
-    lines(lowess(Residuals$origin.period, Residuals$standard.residuals), col="red")
-    abline(h=0, col="grey")
-    plot(standard.residuals ~ cal.period, data=Residuals,
-         ylab="Standardised residuals", xlab="Calendar period")
-    lines(lowess(Residuals$cal.period, Residuals$standard.residuals), col="red")
-    abline(h=0, col="grey")
-    plot(standard.residuals ~ dev.period, data=Residuals,
-         ylab="Standardised residuals", xlab="Development period")
-    lines(lowess(Residuals$dev.period, Residuals$standard.residuals), col="red")
-    abline(h=0, col="grey")
+if(getRversion() < "2.9.0") { ## work around missing feature
 
-    title( title , outer=TRUE)
-    par(op)
+        bp <- barplot(plotdata,
+                      legend.text=c("Latest","Forecast"),
+                      ##    args.legend=list(x="topleft"), only avilable from R version >= 2.9.0
+                      names.arg=rownames(.myResult),
+                      main="Mack Chain Ladder Results",
+                      xlab="Origin period",
+                      ylab="Value",#paste(Currency,myUnit),
+                      ylim=c(0, max(apply(.myResult[c("Ultimate", "Mack.S.E")],1,sum),na.rm=TRUE)))
+
+    }else{
+   bp <- barplot(plotdata,
+                      legend.text=c("Latest","Forecast"),
+                      args.legend=list(x="topleft"),
+                      names.arg=rownames(.myResult),
+                      main="Mack Chain Ladder Results",
+                      xlab="Origin period",
+                      ylab="Value",#paste(Currency,myUnit),
+                      ylim=c(0, max(apply(.myResult[c("Ultimate", "Mack.S.E")],1,sum),na.rm=TRUE)))
+    }
+        ## add error ticks
+        require("Hmisc")
+        errbar(x=bp, y=.myResult$Ultimate,
+               yplus=(.myResult$Ultimate + .myResult$Mack.S.E),
+               yminus=(.myResult$Ultimate - .myResult$Mack.S.E),
+               cap=0.05,
+               add=TRUE)
+
+        matplot(t(.FullTriangle), t="l",
+                main="Chain ladder developments by origin period",
+                xlab="Development period",
+                ylab="Amount", #paste(Currency, myUnit)
+                )
+        matplot(t(.Triangle), add=TRUE)
+
+        Residuals=residuals(x)
+        plot(standard.residuals ~ fitted.value, data=Residuals,
+             ylab="Standardised residuals", xlab="Fitted")
+        lines(lowess(Residuals$fitted.value, Residuals$standard.residuals), col="red")
+        abline(h=0, col="grey")
+        plot(standard.residuals ~ origin.period, data=Residuals,
+             ylab="Standardised residuals", xlab="Origin period")
+        lines(lowess(Residuals$origin.period, Residuals$standard.residuals), col="red")
+        abline(h=0, col="grey")
+        plot(standard.residuals ~ cal.period, data=Residuals,
+             ylab="Standardised residuals", xlab="Calendar period")
+        lines(lowess(Residuals$cal.period, Residuals$standard.residuals), col="red")
+        abline(h=0, col="grey")
+        plot(standard.residuals ~ dev.period, data=Residuals,
+             ylab="Standardised residuals", xlab="Development period")
+        lines(lowess(Residuals$dev.period, Residuals$standard.residuals), col="red")
+        abline(h=0, col="grey")
+
+        title( title , outer=TRUE)
+        par(op)
+
+    }else{
+        long <- expand.grid(origin=as.numeric(dimnames(.FullTriangle)$origin),
+                            dev=as.numeric(dimnames(.FullTriangle)$dev))
+        long$value <- as.vector(.FullTriangle)
+        long$valuePlusMack.S.E <-  long$value + as.vector(x$Mack.S.E)
+        long$valueMinusMack.S.E <- long$value - as.vector(x$Mack.S.E)
+        xyplot(valuePlusMack.S.E + valueMinusMack.S.E + value ~ dev |
+               factor(origin), data=long, t="l", lty=c(3,3,1), as.table=TRUE,
+               main="Chain ladder developments by origin period",
+               xlab="Development period",
+               ylab="Amount",col=1,
+               key=list(lines=list(lty=c(1,3), col=1),
+               text=list(lab=c("Chain ladder dev.", "Mack's S.E.")),
+               space="top", columns=2),...)
+    }
 }
 ################################################################################
 ## residuals
@@ -402,4 +469,111 @@ residuals.MackChainLadder <- function(object,...){
 }
 
 
+Mack <- function(triangle, weights=1, alpha=1){
+    ## Mack Chain Ladder:
+    ## triangle: cumulative claims triangle
+    ## weights : weights
+    ## alpha=0 : gives straight average of the chain ladder age-to-age factors
+    ## alpha=1 : gives the historical chain ladder age-to-age factors
+    ## alpha=2 : is the result of an ordinary regression of C_{i,k+1} against C_{i,k} with intercept 0.
+    weights <- checkWeights(weights, triangle)
 
+    m <- nrow(triangle)
+    n <- ncol(triangle)
+
+    ## Individual chain ladder age-to-age factors:
+    F <- triangle[,-1]/triangle[,-n]
+#    if(is.numeric(weights)){
+#        weights2 <- triangle
+#        weights2[!is.na(weights2)] <- weights
+#        weights <- weights2
+#    }
+
+    wCa <- weights[,-n] * triangle[,-n]^alpha
+    ## Note NA^0=1, hence set all cells which are originally NA back to NA
+    wCa[is.na(triangle[,-n])] <- NA
+
+    wCaF <- wCa*F
+    ## Set diagonal of wCa to NA
+    wCa[row(wCa)==n+1-col(wCa)] <- NA
+    ## Chain-ladder age-to-age factors
+    f <- apply( wCaF, 2, sum, na.rm=TRUE)/apply( wCa, 2, sum, na.rm=TRUE)
+
+    ## Get full triangle
+    avDFs <- c(f,1)
+    dim(avDFs) <- c(1,n,1)
+    ultDFs <- getUltDFs(avDFs)
+
+    Latest <- getLatestCumulative(triangle)
+    ults <- getUltimates(Latest, ultDFs)
+    FullTriangle <- getExpected(ults, 1/ultDFs)
+    dim(FullTriangle)=c(n,n)
+
+    ## Estimate standard errors
+
+    k <- c(1:(n-2))
+    wCa_F_minus_f <- weights[,k] * triangle[,k]^alpha * t(t(F)-f)[,k]^2
+
+    wCa_F_minus_f <-  triangle[,k]^alpha * t(t(F)-f)[,k]^2
+
+    sigma <- sqrt( 1/c(n-k-1) * apply(wCa_F_minus_f, 2, sum, na.rm=TRUE) )
+    # Mack approximation for sigma_{n-1}
+    sigma_n1 <- sqrt( abs(min(sigma[n-2]^4/sigma[n-3]^2, min(sigma[n-3]^2, sigma[n-2]^2)) ))
+    sigma <- c(sigma, sigma_n1)
+
+    # Estimate f.se
+    wCa2 <-  weights[,c(1:(n-1))] * triangle[,c(1:(n-1))]^alpha
+    ## Note NA^0=1, hence set all cells which are originally NA back to NA
+    wCa2[is.na(triangle[,-n])] <- NA
+
+    ## Set diagonal of wCa to na
+    wCa2[row(wCa2)==n+1-col(wCa2)] <- NA
+    f.se <- sigma / sqrt( apply(wCa2, 2, sum, na.rm=TRUE))
+
+    # Estimate F.se
+    W <- weights
+    W[is.na(W)] <- 1
+    F.se <- t(sigma/sqrt(t(W[,c(1:(n-1))]*FullTriangle[,c(1:(n-1))]^alpha)))
+#    F.se <- t(sigma/sqrt(t(FullTriangle[,c(1:(n-1))]^alpha)))
+
+    F.se[is.na(FullTriangle[,c(1:(n-1))])] <- NA
+
+    FullTriangle.se <- FullTriangle * 0
+    ## Recursive Formula
+    rowindex <- 2:m
+    if(m>n)
+        rowindex <- c((m-n+1):m)
+    for(i in rowindex){
+        for(k in c((n+1-i):(n-1))){
+            if(k>0)
+                FullTriangle.se[i,k+1] = sqrt(
+                               FullTriangle[i,k]^2*(F.se[i,k]^2+f.se[k]^2) #
+                               + FullTriangle.se[i,k]^2*f[k]^2
+                               )
+    	}
+    }
+
+    output <- list()
+    output[["call"]] <-  match.call(expand.dots = FALSE)
+    output[["Triangle"]] <- triangle
+    output[["Latest"]] <- Latest
+    output[["FullTriangle"]] <- FullTriangle
+    output[["f"]] <- f
+    output[["F"]] <- F
+    output[["f.se"]] <- f.se
+    output[["F.se"]] <- F.se
+    output[["sigma"]] <-sigma
+    output[["Mack.S.E"]] <- FullTriangle.se
+    class(output) <- c("Mack","list")
+    return(output)
+}
+
+print.Mack <- function(x,...){
+    n <- ncol(x$Triangle)
+    df <- data.frame(Latest=x$Latest, f=c(NA, x$f), f.se=c(NA, x$f.se),
+                     Ultimate=x$FullTriangle[,n])
+    df$IBNR <- df$Ultimate-df$Latest
+    df$Mack.S.E=x$Mack.S.E[,n]
+    df$CV=df$Mack.S.E/df$IBNR
+    print(df)
+}
