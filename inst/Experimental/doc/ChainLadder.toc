@@ -1,0 +1,36 @@
+\select@language {english}
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}
+\contentsline {subsection}{\numberline {1.1}Claims reserving in insurance}{3}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Typical scenario}{3}{subsection.1.2}
+\contentsline {subsection}{\numberline {1.3}Stochastic reserving }{3}{subsection.1.3}
+\contentsline {subsection}{\numberline {1.4}Getting started}{4}{subsection.1.4}
+\contentsline {subsubsection}{\numberline {1.4.1}Installation:}{4}{subsubsection.1.4.1}
+\contentsline {subsubsection}{\numberline {1.4.2}Loading the package:}{4}{subsubsection.1.4.2}
+\contentsline {subsubsection}{\numberline {1.4.3}Help:}{4}{subsubsection.1.4.3}
+\contentsline {subsubsection}{\numberline {1.4.4}Examples:}{4}{subsubsection.1.4.4}
+\contentsline {subsection}{\numberline {1.5}Example data sets }{4}{subsection.1.5}
+\contentsline {subsection}{\numberline {1.6}Working with triangles}{5}{subsection.1.6}
+\contentsline {section}{\numberline {2}ChainLadder package philosophy}{7}{section.2}
+\contentsline {subsection}{\numberline {2.1}Chain-ladder as linear regression }{7}{subsection.2.1}
+\contentsline {section}{\numberline {3}The ChainLadder package}{8}{section.3}
+\contentsline {subsection}{\numberline {3.1}MackChainLadder}{9}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}MunichChainLadder}{9}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}BootChainLadder}{11}{subsection.3.3}
+\contentsline {subsection}{\numberline {3.4}Generic Methods}{13}{subsection.3.4}
+\contentsline {section}{\numberline {4}R and databases}{14}{section.4}
+\contentsline {subsection}{\numberline {4.1}Create sample data in a table format}{14}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Write test data into database}{15}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Transform tables into triangles}{15}{subsection.4.3}
+\contentsline {subsection}{\numberline {4.4}Database summary}{20}{subsection.4.4}
+\contentsline {section}{\numberline {5}R and MS Office interfaces}{21}{section.5}
+\contentsline {subsection}{\numberline {5.1}Windows meta-file}{21}{subsection.5.1}
+\contentsline {subsection}{\numberline {5.2}Clipboard to exchange data}{21}{subsection.5.2}
+\contentsline {subsubsection}{\numberline {5.2.1}R $\to $ Excel}{21}{subsubsection.5.2.1}
+\contentsline {subsubsection}{\numberline {5.2.2}Excel $\to $ R}{21}{subsubsection.5.2.2}
+\contentsline {subsection}{\numberline {5.3}RExcel - Using R from within Excel}{21}{subsection.5.3}
+\contentsline {subsection}{\numberline {5.4}Using the COM server (VBA Example)}{21}{subsection.5.4}
+\contentsline {subsection}{\numberline {5.5}rcom: Control MS Office from R}{22}{subsection.5.5}
+\contentsline {section}{\numberline {6}More help}{22}{section.6}
+\contentsline {section}{\numberline {7}Conclusion}{23}{section.7}
+\contentsline {section}{\numberline {8}The \textbf {ChainLadder} package}{24}{section.8}
+\contentsline {subsection}{\numberline {8.1}Mack Chain Ladder}{24}{subsection.8.1}

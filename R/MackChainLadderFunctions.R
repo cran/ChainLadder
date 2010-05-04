@@ -36,10 +36,10 @@ MackChainLadder <- function(Triangle,
 
     ## Predict the chain ladder model
     FullTriangle <- predict.TriangleModel(list(Models=CL[["Models"]], Triangle=Triangle))
-
     ## Estimate the standard error for f and F
     StdErr <- Mack.S.E(CL[["Models"]], FullTriangle, est.sigma=est.sigma,
                        weights=CL[["weights"]], alpha=alpha)
+
 
     Total.SE <- TotalMack.S.E(FullTriangle, StdErr$f, StdErr$f.se, StdErr$F.se)
 
@@ -230,7 +230,7 @@ estimate.sigma <- function(sigma){
     if(!all(is.na(sigma))){
         n <- length(sigma)
         dev <- 1:n
-        my.dev <- dev[!is.na(sigma)]
+        my.dev <- dev[!is.na(sigma) & sigma > 0]
         my.model <- lm(log(sigma[my.dev]) ~ my.dev)
         sigma[is.na(sigma)] <- exp(predict(my.model, newdata=data.frame(my.dev=dev[is.na(sigma)])))
     }
@@ -257,6 +257,7 @@ tail.SE <- function(FullTriangle, StdErr, Total.SE, tail.factor, tail.se=NULL, t
     start <- 1
     .f <- StdErr$f[start:(n-1)]
     .dev <- c(start:(n-1))
+##    mf <- lm(log(.f[.f>1]-1) ~ .dev[.f>1])
     mf <- lm(log(.f-1) ~ .dev)
     tail.pos <- ( log(StdErr$f[n]-1) - coef(mf)[1] ) / coef(mf)[2]
 
@@ -308,7 +309,9 @@ summary.MackChainLadder <- function(object,...){
     names(ByOrigin)[6]="CV(IBNR)"
     ByOrigin <- ByOrigin[ex.origin.period,]
 
-    Totals <-  c(sum(Latest,na.rm=TRUE), sum(Ultimate,na.rm=TRUE),
+    Totals <-  c(sum(Latest,na.rm=TRUE),
+                 sum(Latest,na.rm=TRUE)/sum(Ultimate,na.rm=TRUE),
+                 sum(Ultimate,na.rm=TRUE),
                  sum(IBNR,na.rm=TRUE), object[["Total.Mack.S.E"]],
                  object[["Total.Mack.S.E"]]/sum(IBNR,na.rm=TRUE)
                  )
@@ -316,7 +319,7 @@ summary.MackChainLadder <- function(object,...){
     Totals <- as.data.frame(Totals)
 
     colnames(Totals)=c("Totals")
-    rownames(Totals) <- c("Latest:","Ultimate:",
+    rownames(Totals) <- c("Latest:","Dev:","Ultimate:",
                           "IBNR:","Mack S.E.:",
                           "CV(IBNR):")
 
@@ -327,7 +330,7 @@ summary.MackChainLadder <- function(object,...){
 getLatestCumulative <- function(cumulative.tri) {
   # Return the latest diagonal as a vector from a cumulative triangle
   available.indicies <- apply(!is.na(cumulative.tri), 1, which)
-  latest.indicies <- sapply(available.indicies, function(x) ifelse(length(x)>1, max(x), 1) )
+  latest.indicies <- sapply(available.indicies, function(x) ifelse(length(x)>0, max(x), 1) )
   if (any(latest.indicies < 1))
     stop("Some year (row) has no available losses")
   return(cumulative.tri[cbind(1:nrow(cumulative.tri), latest.indicies)])
@@ -436,7 +439,7 @@ if(getRversion() < "2.9.0") { ## work around missing feature
         long$valuePlusMack.S.E <-  long$value + as.vector(x$Mack.S.E)
         long$valueMinusMack.S.E <- long$value - as.vector(x$Mack.S.E)
         xyplot(valuePlusMack.S.E + valueMinusMack.S.E + value ~ dev |
-               factor(origin), data=long, t="l", lty=c(3,3,1), as.table=TRUE,
+               factor(origin), data=long[!is.na(long$value),], t="l", lty=c(3,3,1), as.table=TRUE,
                main="Chain ladder developments by origin period",
                xlab="Development period",
                ylab="Amount",col=1,

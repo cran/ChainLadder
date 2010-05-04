@@ -1,8 +1,21 @@
-export(MackChainLadder, MunichChainLadder, BootChainLadder)
+export(MackChainLadder, MunichChainLadder, BootChainLadder, MultiChainLadder)
 export(as.triangle)
 export(chainladder)
+export(getLatestCumulative)
 export(incr2cum, cum2incr)
-importFrom(stats, quantile)
+export(Join2Fits, JoinFitMse, Mse, residCov, residCor)
+
+importFrom(stats, quantile, predict, coef, vcov,
+              residuals, resid, fitted, fitted.values, rstandard)
+importFrom(methods, show, coerce, cbind2, rbind2 )
+importFrom(graphics, plot)
+importFrom(Matrix, summary)
+
+#Classes
+exportClasses(triangles, MultiChainLadder, MultiChainLadderFit,
+              MCLFit, GMCLFit, MultiChainLadderMse, MultiChainLadderSummary,
+			NullNum, NullChar)
+           
 #Methods
 S3method(plot, MackChainLadder)
 S3method(plot, MunichChainLadder)
@@ -15,6 +28,7 @@ S3method(print, BootChainLadder)
 S3method(print, triangle)
 
 
+
 S3method(as.triangle, matrix)
 S3method(as.triangle, data.frame)
 S3method(as.data.frame, triangle)
@@ -23,9 +37,15 @@ S3method(summary, MackChainLadder)
 S3method(summary, MunichChainLadder)
 S3method(summary, BootChainLadder)
 
+
 S3method(predict, TriangleModel)
 S3method(predict, ChainLadder)
 S3method(residuals, MackChainLadder)
 S3method(quantile, BootChainLadder)
 S3method(residuals, BootChainLadder)
 S3method(mean, BootChainLadder)
+
+
+exportMethods(predict, Mse, summary, show, coerce,
+              "[", "$", "[[", "[<-", names, coef, vcov, residCov, residCor,
+              residuals, resid, rstandard, fitted, fitted.values, plot, cbind2, rbind2, dim )

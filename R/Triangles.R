@@ -6,6 +6,7 @@ incr2cum <- function(Triangle, na.rm=FALSE){
     if(na.rm){
         upper <- col(Triangle) <= ncol(Triangle) + 1 - row(Triangle)
         upperna <- which(is.na(Triangle[upper]), arr.ind=TRUE)
+
         Triangle[upper][upperna] <- 0
     }
     cum <- t(apply(Triangle,1, cumsum))
@@ -88,8 +89,12 @@ print.triangle <- function(x,...){
 .as.MatrixTriangle <- function(x, origin="origin", dev="dev", value="value"){
     ## x has to be a data.frame with columns: origin, dev and value
     x <- x[,c(origin, dev, value)]
+    x <- x[order(x[origin], x[dev]),]
     names(x) <- c("origin", "dev", "value")
     .names <- apply(x[,c("origin", "dev", "value")], 2, unique)
+    if(class(.names) != "list"){
+        .names <- as.list(as.data.frame(.names))
+    }
     .namesOD <- .names[c("origin", "dev")]
     ## Expand to include entire array, in case don't have complete data
     .id <- paste(x$origin, x$dev,  sep='.')
@@ -105,6 +110,7 @@ print.triangle <- function(x,...){
 .as.LongTriangle <- function(Triangle, na.rm=FALSE){
     x <- Triangle
     lx <- expand.grid(origin=as.numeric(dimnames(x)$origin), dev=as.numeric(dimnames(x)$dev))
+    ##    lx <- expand.grid(origin=dimnames(x)$origin, dev=dimnames(x)$dev)
     lx$value <- as.vector(x)
     if(na.rm){
         lx <- na.omit(lx)
