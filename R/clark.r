@@ -35,31 +35,34 @@
 #           LDF Method
 #           Cape Cod Method
 
-ClarkLDF <- function(data,
+ClarkLDF <- function(Triangle,
         cumulative = TRUE,
+        maxage = Inf,
         adol = TRUE,
-        maxage = c(Inf, Inf),
+        adol.age = NULL,
+        origin.width = NULL,
         G = "loglogistic"
         ) {
-    # maxage can be a vector of length 1 or 2 and represents the age
-    #   to which losses are projected at Ultimate
-    # 1st element is the "traditional" age measured from the beginning 
-    #   of the origin year
-    # If second element exists, then it is the length of time from the
-    #   average date of loss (adol.age) of the origin year, which is
-    #   only relevant if adol=TRUE
+    # maxage represents the age to which losses are projected at Ultimate
+    # adol.age is the age within an origin period of the 
+    #   average date of loss (adol.age); only relevant if adol=TRUE
+    # origin.width is the width of an origin period; only relevant if adol=TRUE
     
+    if (!is.character(G))
+        stop("Growth function G must be the character name of a growth function")
+    if (length(G)>1L)
+        stop("Only one growth function can be specified")
     G <- switch(G,
          loglogistic = loglogistic,
          weibull = weibull,
          stop(paste("Growth function '", G, "' unrecognized", sep=""))
          )
         
-    if (!is.matrix(data)) stop("ClarkLDF expects data in matrix format")
-    nr <- nrow(data)
-    if (nr < 4L || ncol(data) < 4L) stop("matrix must be at least 4x4")
+    if (!is.matrix(Triangle)) stop("ClarkLDF expects Triangle in matrix format")
+    nr <- nrow(Triangle)
+    if (ncol(Triangle) < 4L) stop("matrix must have at least 4 columns")
 
-    dev <- as.numeric(colnames(data))
+    dev <- as.numeric(colnames(Triangle))
     if (any(is.na(dev))) stop("non-'age' column name(s)")
     if (any(dev[-1L]<=head(dev, -1L))) stop("ages must be strictly increasing")
     if (tail(dev, 1L) > maxage[1L]) stop("'maxage' must not be less than last age in triangle")
@@ -68,82 +71,82 @@ ClarkLDF <- function(data,
 #    workarea <- new.env()
     workarea <<- new.env()
 
-    if (!inherits(data, "triangle")) data <- as.triangle(data)
+    if (!inherits(Triangle, "triangle")) Triangle <- as.triangle(Triangle)
 
     # Save the origin, dev names
-    origins <- rownames(data)
-    devs <- colnames(data)
+    origins <- rownames(Triangle)
+    devs <- colnames(Triangle)
     # Save user's names for 'origin' (row) and 'dev' (column), if any
     dimnms <- c("origin", "dev")
-    if (!is.null(nm<-names(dimnames(data)))) 
+    if (!is.null(nm<-names(dimnames(Triangle)))) 
         # If only one name specified by user, other will be NA
         dimnms[!is.na(nm)] <- nm[!is.na(nm)]
 
-    # Calculate the age.from/to's.
+    # Calculate the age.from/to's and maxage based on adol setting.
     Age.to <- dev
-    Age.from <- c(0, head(Age.to, -1L))
     if (adol) {
-        Age.to <- (Age.from + Age.to)/2
-        Age.from <- c(0, head(Age.to, -1L))
-        colnames(data) <- Age.to
-        }
-
-    # maxage can be a vector of length 1 or 2
-    # 1st element is the "traditional" age measured from the beginning 
-    #   of the origin year
-    # If second element exists, then it is the length of time from the
-    #   average date of loss (adol.age) of the origin year, which is
-    #   only relevant if adol=TRUE
-    # If the second element does not exist, we'll guess its value.
-    maxage.traditional <- maxage[1L]
-    if (length(maxage)>1L) {
-        if (adol) maxage <- maxage[2L]
-        else {
-            warning("Length(maxage)>2 but !adol -- maxage[2] ignored")
-            maxage <- maxage[1L]
+        if (is.null(origin.width)) {
+            agediff <- diff(Age.to)
+            if (!all(abs(agediff-agediff[1L])<sqrt(.Machine$double.eps))) 
+                warning("origin.width unspecified, but varying age differences; check reasonableness of 'Table64$AgeUsed'")
+            origin.width <-  mean(agediff)
             }
+        if (is.null(adol.age)) # default is half width of origin period
+            adol.age <- origin.width / 2
+        # rudimentary reasonableness checks of adol.age
+        if (adol.age < 0) 
+            stop("age of average date of loss cannot be negative")
+        if (adol.age >= origin.width) 
+            stop("age of average date of loss must be < origin.width (ie, within origin period)")
+        ## For all those ages that are before the end of the origin period,
+        ## we will assume that the average date of loss of the
+        ## partial period is proportional to the age
+        early.age <- Age.to < origin.width
+        Age.to[!early.age] <- Age.to[!early.age] - adol.age
+        Age.to[early.age] <- Age.to[early.age] * (1 - adol.age / origin.width)
+        colnames(Triangle) <- Age.to
+        maxage.used <- maxage - adol.age
         }
     else {
-        if (adol) {
-            agediff <- (Age.to-Age.from)[-1L]
-            meandiff <- mean(agediff)/2
-            if (!all(abs(agediff-agediff[1L])<sqrt(.Machine$double.eps))) 
-                warning("Varying age differences; check reasonability of maxage calculation")
-            maxage <- maxage.traditional - meandiff
-            }
+        if (!is.null(adol.age))
+            stop("adol.age is specified but adol is FALSE")
+        if (!is.null(origin.width))
+            stop("origin.width is specified but adol is FALSE")
+        maxage.used <- maxage
         }
+    Age.from <- c(0, head(Age.to, -1L))
 
-    # Let's scale the data asap.
+    # Let's scale the Triangle asap.
     # Just as Clark uses sigma2 to scale to model with ODP, we will scale
     #   losses by a large amount so that the scaled losses and the growth 
     #   function  parameters are in a closer relative magnitude. Otherwise, 
     #   the Fisher Information matrix may not invert.
-    CurrentValue <- getLatestCumulative(if (cumulative) data else incr2cum(data))
-    Uinit <- if (is.logical(tryCatch(checkTriangle(data), error = function(e) FALSE))) CurrentValue
+    CurrentValue <- getLatestCumulative(if (cumulative) Triangle else incr2cum(Triangle))
+    Uinit <- if (is.logical(tryCatch(checkTriangle(Triangle), error = function(e) FALSE))) CurrentValue
         else 
-        if (cumulative) predict(chainladder(data))[,ncol(data)] 
-        else predict(chainladder(incr2cum(data)))[,ncol(data)]
+        if (cumulative) predict(chainladder(Triangle))[,ncol(Triangle)] 
+        else predict(chainladder(incr2cum(Triangle)))[,ncol(Triangle)]
     magscale <- max(Uinit)
-    data <- data / magscale
+    Triangle <- Triangle / magscale
     CurrentValue <- CurrentValue / magscale
     Uinit <- Uinit / magscale
 
     # Save age from/to's of current diagonal
-    CurrentAge <- getLatestCumulative({
-        z <- col(data)
-        z[is.na(data)]<-NA
-        array(dev[z], dim(data))
+    CurrentAge <- getLatestCumulative({ # as labeled, prior to adol adjustment
+        z <- col(Triangle)
+        z[is.na(Triangle)]<-NA
+        array(dev[z], dim(Triangle))
         })
-    CurrentAge.from <- getLatestCumulative(array(Age.from[z], dim(data)))
-    CurrentAge.to <- getLatestCumulative(array(Age.to[z], dim(data)))
+    CurrentAge.from <- getLatestCumulative(array(Age.from[z], dim(Triangle)))
+    CurrentAge.to <- getLatestCumulative(array(Age.to[z], dim(Triangle)))
 
     # Turn loss matrix into incremental losses, if not already
-    if (cumulative) data <-cum2incr(data)
+    if (cumulative) Triangle <-cum2incr(Triangle)
 
     # Create the "long format" data.frame as in Table 1.1 of paper.
-    Table1.1 <- as.data.frame(as.triangle(data))
+    Table1.1 <- as.data.frame(as.triangle(Triangle))
     Table1.1$origin <- seq.int(nr)
-    Table1.1$dev <- rep(seq.int(ncol(data)), each=nr)
+    Table1.1$dev <- rep(seq.int(ncol(Triangle)), each=nr)
     Table1.1$Age.from <- rep(Age.from, each=nr)
     Table1.1$Age.to <- rep(Age.to, each=nr)
     Table1.1 <- Table1.1[!is.na(Table1.1[[3L]]),]
@@ -168,10 +171,12 @@ ClarkLDF <- function(data,
         G,              
         workarea,
         method="L-BFGS-B",
-        lower=c(min(data, na.rm=TRUE), .1, min(c(.5, workarea$Age.to))),
+        lower = c(rep(sqrt(.Machine$double.eps), nr), G@LBFGSB.lower(workarea)),
+        upper = c(rep(Inf, nr), G@LBFGSB.upper(workarea)),
         control = list(
             fnscale=-1,
             parscale=c(Uinit, 1, 1),
+            factr=.Machine$double.eps^-.5,
             maxit=100000
             ),
         hessian=FALSE
@@ -190,8 +195,10 @@ ClarkLDF <- function(data,
     theta <- S$par
     K  <- np - G@np
     K1 <- seq.int(K)
-    U<-thetaU <- theta[K1]
-    thetaG <- theta[seq.int(length = G@np, to = np)]
+    U <- thetaU <- theta[K1]
+    thetaG <- tail(theta, G@np)
+    if (any(G@LBFGSB.lower(workarea) == thetaG | G@LBFGSB.upper(workarea) == thetaG)) 
+        warning("Solution constrained at growth function boundary! Use results with caution!\n\n")
     
     # Calculate the sigma2 "scaling parameter"
     sigma2 <- workarea$sigma2 <- LL.ODP.sigma2(workarea)
@@ -213,18 +220,23 @@ ClarkLDF <- function(data,
 
     # Calculate the Fisher Information matrix = matrix of
     #   2nd partial derivatives of the LL fcn w.r.t. all parameters
-    workarea$FI <- FI <- d2LL.ODPdt2(S$par, MU.LDF, G, workarea)
-    # FImult <- array(
-    #     c(rep(c(rep(1/magscale, K), rep(1, G@np)), K), 
-    #       rep(c(rep(1, K), rep(magscale, G@np)), G@np)),
-    #     c(np, np)
-    #     ) 
+    workarea$FI <- FI <- structure(
+        d2LL.ODPdt2(S$par, MU.LDF, G, workarea),
+        dimnames = list(names(S$par), names(S$par))
+        )
+
+    # array to "unscale" FI
+    FImult <- array(
+        c(rep(c(rep(1/magscale, K), rep(1, G@np)), K), 
+          rep(c(rep(1, K), rep(magscale, G@np)), G@np)),
+        c(np, np)
+        ) 
 
     # Let's see if FI will invert
     if (rcond(FI)<.Machine$double.eps) { # No
         message("Fisher Information matrix is computationally singular (condition number = ",
                 format(1/rcond(FI), digits=3, scientific=TRUE), 
-                ")\nExpected values, process risk available; parameter risk not calculable"
+                ")\nParameter risk estimates not available"
                 )
         # Calculate the gradient matrix, dR = matrix of 1st partial derivatives
         #   for every origin year w.r.t. every parameter
@@ -272,11 +284,11 @@ ClarkLDF <- function(data,
         Table64 <- data.frame(
             Origin = c("", origins, "Total"),
             CurrentValue = c(NA, CurrentValue, CurrentValue.sum) * magscale,
-            CurrentAge = c(maxage.traditional, CurrentAge, NA),
-            AgeUsed = c(maxage, CurrentAge.to, NA),
+            CurrentAge = c(maxage, CurrentAge, NA),
+            AgeUsed = c(maxage.used, CurrentAge.to, NA),
             GrowthFunction = c(g, NA),
             LDF = c(1 / g, NA),
-            TruncatedLDF = c(G(maxage, thetaG) / g, NA),
+            TruncatedLDF = c(G(maxage.used, thetaG) / g, NA),
             LossesAtMaxage = c(NA, CurrentValue + R.alt, CurrentValue.sum + R.alt.sum) * magscale,
             EstimatedReserves = c(NA, R.alt, R.alt.sum) * magscale,
             stringsAsFactors = FALSE
@@ -371,11 +383,11 @@ ClarkLDF <- function(data,
         Table64 <- data.frame(
             Origin = c("", origins, "Total"),
             CurrentValue = c(NA, CurrentValue, CurrentValue.sum) * magscale,
-            CurrentAge = c(maxage.traditional, CurrentAge, NA),
-            AgeUsed = c(maxage, CurrentAge.to, NA),
+            CurrentAge = c(maxage, CurrentAge, NA),
+            AgeUsed = c(maxage.used, CurrentAge.to, NA),
             GrowthFunction = c(g, NA),
             LDF = c(1 / g, NA),
-            TruncatedLDF = c(G(maxage, thetaG) / g, NA),
+            TruncatedLDF = c(G(maxage.used, thetaG) / g, NA),
             LossesAtMaxage = c(NA, CurrentValue + R.alt, CurrentValue.sum + R.alt.sum) * magscale,
             EstimatedReserves = c(NA, R.alt, R.alt.sum) * magscale,
             stringsAsFactors = FALSE
@@ -388,132 +400,141 @@ ClarkLDF <- function(data,
             growthFunction = G@name,
             Table65 = Table65,
             Table64 = Table64,
-            par = c(unclass(S$par)),
+            par = c(unclass(S$par)) * c(rep(magscale, K), rep(1, G@np)),
             sigma2 = c(unclass(sigma2)) * magscale,
             LDF = LDF,
-            # dR = dR * c(rep(1, K), rep(magscale, G@np)),
+            dR = dR * c(rep(1, K), rep(magscale, G@np)),
             origin = workarea$origin,
             age = workarea$dev,
             fitted = workarea$mu * magscale,
             residuals = workarea$residuals * magscale,
-            stdresid = workarea$residuals/sqrt(sigma2*workarea$mu)#,
-            # FI=FI * FImult
+            stdresid = workarea$residuals/sqrt(sigma2*workarea$mu),
+            FI = FI * FImult,
+            value = S$value,
+            counts = S$counts
             ),
         class=c("clark","list")
         )
     }
 
-ClarkCapeCod <- function(data,
+ClarkCapeCod <- function(Triangle,
         Premium,
         cumulative = TRUE,
+        maxage = Inf,
         adol = TRUE,
-        maxage = c(Inf, Inf),
+        adol.age = NULL,
+        origin.width = NULL,
         G = "loglogistic"
         ) {
-    # maxage can be a vector of length 1 or 2 and represents the age
-    #   to which losses are projected at Ultimate
-    # 1st element is the "traditional" age measured from the beginning 
-    #   of the origin year
-    # If second element exists, then it is the length of time from the
-    #   average date of loss (adol.age) of the origin year, which is
-    #   only relevant if adol=TRUE
+    # maxage represents the age to which losses are projected at Ultimate
+    # adol.age is the age within an origin period of the 
+    #   average date of loss (adol.age); only relevant if adol=TRUE
+    # origin.width is the width of an origin period; only relevant if adol=TRUE
         
+    if (!is.character(G))
+        stop("Growth function G must be the character name of a growth function")
+    if (length(G)>1L)
+        stop("Only one growth function can be specified")
     G <- switch(G,
          loglogistic = loglogistic,
          weibull = weibull,
          stop(paste("Growth function '", G, "' unrecognized", sep=""))
          )
         
-    if (!is.matrix(data)) stop("ClarkCapeCod expects data in matrix format")
-    nr <- nrow(data)
-    if (nr < 4L || ncol(data) < 4L) stop("matrix must be at least 4x4")
+    if (!is.matrix(Triangle)) stop("ClarkCapeCod expects Triangle in matrix format")
+    nr <- nrow(Triangle)
+    if (ncol(Triangle) < 4L) stop("matrix must have at least 4 columns")
 
-    dev <- as.numeric(colnames(data))
+    # Recycle Premium, limit length, as necessary
+    Premium <- c(Premium)
+    if (length(Premium) == 1L) Premium <- rep(Premium, nr)
+    else
+    if (length(Premium)!=nr) {
+        warning('Mismatch between length(Premium)=', length(Premium), ' and nrow(Triangle)=', nrow(Triangle), '. Check results!')
+        if (length(Premium) < nr) Premium <- rep(Premium, nr)
+        if (length(Premium) > nr) Premium <- Premium[seq.int(nr)]
+        }
+
+    dev <- as.numeric(colnames(Triangle))
     if (any(is.na(dev))) stop("non-'age' column name(s)")
     if (any(dev[-1L]<=head(dev, -1L))) stop("ages must be strictly increasing")
     if (tail(dev, 1L) > maxage[1L]) stop("'maxage' must not be less than last age in triangle")
     
     # 'workarea' stores intermediate calculations
-    workarea <- new.env()
+#    workarea <- new.env()
+    workarea <<- new.env()
 
-    if (!inherits(data, "triangle")) data <- as.triangle(data)
+    if (!inherits(Triangle, "triangle")) Triangle <- as.triangle(Triangle)
 
     # Save the origin, dev names
-    origins <- rownames(data)
-    devs <- colnames(data)
+    origins <- rownames(Triangle)
+    devs <- colnames(Triangle)
     # Save user's names for 'origin' (row) and 'dev' (column), if any
     dimnms <- c("origin", "dev")
-    if (!is.null(nm<-names(dimnames(data)))) 
+    if (!is.null(nm<-names(dimnames(Triangle)))) 
         # If only one name specified by user, other will be NA
         dimnms[!is.na(nm)] <- nm[!is.na(nm)]
 
-    # Calculate the age.from/to's.
+    # Calculate the age.from/to's and maxage based on adol setting.
     Age.to <- dev
-    Age.from <- c(0, head(Age.to, -1L))
     if (adol) {
-        Age.to <- (Age.from + Age.to)/2
-        Age.from <- c(0, head(Age.to, -1L))
-        colnames(data) <- Age.to
-        }
-
-    # maxage can be a vector of length 1 or 2
-    # 1st element is the "traditional" age measured from the beginning 
-    #   of the origin year
-    # If second element exists, then it is the length of time from the
-    #   average date of loss (adol.age) of the origin year, which is
-    #   only relevant if adol=TRUE
-    # If the second element does not exist, we'll guess its value.
-    maxage.traditional <- maxage[1L]
-    if (length(maxage)>1L) {
-        if (adol) maxage <- maxage[2L]
-        else {
-            warning("Length(maxage)>2 but !adol -- maxage[2] ignored")
-            maxage <- maxage[1L]
+        if (is.null(origin.width)) {
+            agediff <- diff(Age.to)
+            if (!all(abs(agediff-agediff[1L])<sqrt(.Machine$double.eps))) 
+                warning("origin.width unspecified, but varying age differences; check reasonableness of 'Table64$AgeUsed'")
+            origin.width <-  mean(agediff)
             }
+        if (is.null(adol.age)) # default is half width of origin period
+            adol.age <- origin.width / 2
+        # rudimentary reasonableness checks of adol.age
+        if (adol.age < 0) 
+            stop("age of average date of loss cannot be negative")
+        if (adol.age >= origin.width) 
+            stop("age of average date of loss must be < origin.width (ie, within origin period)")
+        ## For all those ages that are before the end of the origin period,
+        ## we will assume that the average date of loss of the
+        ## partial period is proportional to the age
+        early.age <- Age.to < origin.width
+        Age.to[!early.age] <- Age.to[!early.age] - adol.age
+        Age.to[early.age] <- Age.to[early.age] * (1 - adol.age / origin.width)
+        colnames(Triangle) <- Age.to
+        maxage.used <- maxage - adol.age
         }
     else {
-        if (adol) {
-            agediff <- (Age.to-Age.from)[-1L]
-            meandiff <- mean(agediff)/2
-            if (!all(agediff==agediff[1L]))
-                warning("Varying age differences; check reasonability of maxage calculation")
-            maxage <- maxage.traditional - meandiff
-            }
+        if (!is.null(adol.age))
+            stop("adol.age is specified but adol is FALSE")
+        if (!is.null(origin.width))
+            stop("origin.width is specified but adol is FALSE")
+        maxage.used <- maxage
         }
-    
-    # Let's scale the data asap.
-    # Just as Clark uses sigma2 to scale to model with ODP, we will scale
-    #   losses by a large amount so that the scaled losses and the growth 
-    #   function  parameters are in a closer relative magnitude. Otherwise, 
-    #   the Fisher Information matrix may not invert.
-    CurrentValue <- getLatestCumulative(if (cumulative) data else incr2cum(data))
-    Uinit <- if (is.logical(tryCatch(checkTriangle(data), error = function(e) FALSE))) CurrentValue
-        else 
-        if (cumulative) predict(chainladder(data))[,ncol(data)] 
-        else predict(chainladder(incr2cum(data)))[,ncol(data)]
-    magscale <- max(Uinit)
-    data <- data / magscale
-    CurrentValue <- CurrentValue / magscale
-    Uinit <- Uinit / magscale
-    Premium <- Premium/magscale
+    Age.from <- c(0, head(Age.to, -1L))
+
+    # Triangle does not need to be scaled for Cape Cod method.
+    CurrentValue <- getLatestCumulative(if (cumulative) Triangle else incr2cum(Triangle))
+
+    ELRinit <- if (is.logical(tryCatch(checkTriangle(Triangle), error = function(e) FALSE))) 1.000
+        else sum(if (cumulative) predict(chainladder(Triangle))[,ncol(Triangle)] 
+                 else predict(chainladder(incr2cum(Triangle)))[,ncol(Triangle)]) / sum(Premium)
+
+
 
     # Save age from/to's of current diagonal
     CurrentAge <- getLatestCumulative({
-        z <- col(data)
-        z[is.na(data)]<-NA
-        array(dev[z], dim(data))
+        z <- col(Triangle)
+        z[is.na(Triangle)]<-NA
+        array(dev[z], dim(Triangle))
         })
-    CurrentAge.from <- getLatestCumulative(array(Age.from[z], dim(data)))
-    CurrentAge.to <- getLatestCumulative(array(Age.to[z], dim(data)))
+    CurrentAge.from <- getLatestCumulative(array(Age.from[z], dim(Triangle)))
+    CurrentAge.to <- getLatestCumulative(array(Age.to[z], dim(Triangle)))
 
     # Turn loss matrix into incremental losses, if not already
-    if (cumulative) data <-cum2incr(data)
+    if (cumulative) Triangle <-cum2incr(Triangle)
 
     # Create the "long format" data.frame as in Table 1.1 of paper.
-    Table1.1 <- as.data.frame(as.triangle(data))
+    Table1.1 <- as.data.frame(as.triangle(Triangle))
     Table1.1$origin <- seq.int(nr)
-    Table1.1$P   <- rep(Premium, ncol(data))
-    Table1.1$dev <- rep(seq.int(ncol(data)), each=nr)
+    Table1.1$P   <- rep(Premium, ncol(Triangle))
+    Table1.1$dev <- rep(seq.int(ncol(Triangle)), each=nr)
     Table1.1$Age.from <- rep(Age.from, each=nr)
     Table1.1$Age.to <- rep(Age.to, each=nr)
     Table1.1 <- Table1.1[!is.na(Table1.1[[3L]]),]
@@ -530,8 +551,7 @@ ClarkCapeCod <- function(data,
     rm(Table1.1)
 
     # Calc starting values for the parameters, call optim
-    theta <- c(ELR=ifelse(is.na(sum(Uinit)), .5, sum(Uinit)/sum(Premium)), G@initialGuess(workarea))
-
+    theta <- c(ELR=ELRinit, G@initialGuess(workarea))
     S <- optim(
         par = theta,
         LL.ODP, # function to be maximized (fmscale=-1)
@@ -540,14 +560,15 @@ ClarkCapeCod <- function(data,
         G,              
         workarea,
         method="L-BFGS-B",
-        lower=c(.001, .1, min(c(.5, workarea$Age.to))),
+        lower = c(sqrt(.Machine$double.eps), G@LBFGSB.lower(workarea)),
+        upper = c(10, G@LBFGSB.upper(workarea)),
         control = list(
             fnscale=-1,
+            factr=.Machine$double.eps^-.5,
             maxit=100000
             ),
         hessian=FALSE
         )
-
     if (S$convergence>0) {
         msg <- "Maximum likelihood solution not found."
         if (S$convergence == 1)
@@ -559,8 +580,12 @@ ClarkCapeCod <- function(data,
 
     # Pull the parameters out of the solution list
     theta <- S$par
+    K  <- np - G@np
+    K1 <- seq.int(K)
     ELR <- theta[1L]
-    thetaG <- theta[seq.int(length = G@np, to = np)]
+    thetaG <- tail(theta, G@np)
+    if (any(G@LBFGSB.lower(workarea) == thetaG | G@LBFGSB.upper(workarea) == thetaG)) 
+        warning("Solution constrained at growth function boundary! Use results with caution!\n\n")
     
     # Calculate the sigma2 "scaling parameter"
     sigma2 <- workarea$sigma2 <- LL.ODP.sigma2(workarea)
@@ -578,13 +603,16 @@ ClarkCapeCod <- function(data,
 
     # Calculate the Fisher Information matrix = matrix of
     #   2nd partial derivatives of the LL fcn w.r.t. all parameters
-    workarea$FI <- FI <- d2LL.ODPdt2(S$par, MU.CapeCod, G, workarea)
+    workarea$FI <- FI <- structure(
+        d2LL.ODPdt2(S$par, MU.CapeCod, G, workarea),
+        dimnames = list(names(S$par), names(S$par))
+        )
 
     # Let's see if FI will invert
     if (rcond(FI)<.Machine$double.eps) { # No
         message("Fisher Information matrix is computationally singular (condition number = ",
                 format(1/rcond(FI), digits=3, scientific=TRUE), 
-                ")\nExpected values, process risk available; parameter risk not calculable"
+                ")\nParameter risk estimates not available"
                 )
         # Calculate the gradient matrix, dR = matrix of 1st partial derivatives
         #   for every origin year w.r.t. every parameter
@@ -617,28 +645,28 @@ ClarkCapeCod <- function(data,
         # Form "report table" as on p. 65 of paper
         Table65 <- data.frame(
             Origin = c(origins, "Total"),
-            CurrentValue = c(CurrentValue, CurrentValue.sum) * magscale,
-            EstimatedReserves = c(R, R.sum) * magscale,
-            ProcessSE = c(gammar, gammar.sum) * magscale,
+            CurrentValue = c(CurrentValue, CurrentValue.sum),# * magscale,
+            EstimatedReserves = c(R, R.sum),# * magscale,
+            ProcessSE = c(gammar, gammar.sum),# * magscale,
             ProcessCV = 100*round(c(gammar, gammar.sum) / c(R, R.sum), 3),
-            ParameterSE = c(deltar, deltar.sum) * magscale,
+            ParameterSE = c(deltar, deltar.sum),# * magscale,
             ParameterCV = 100*round(c(deltar, deltar.sum) / c(R, R.sum), 3),
-            TotalSE = c(totalr, totalr.sum) * magscale,
+            TotalSE = c(totalr, totalr.sum),# * magscale,
             TotalCV = 100*round(c(totalr, totalr.sum) / c(R, R.sum), 3),
             stringsAsFactors = FALSE
             )
     
-        g <- G(c(maxage, CurrentAge.to), thetaG)
+        g <- G(c(maxage.used, CurrentAge.to), thetaG)
         gInf <- G(c(Inf, CurrentAge.to), thetaG)
         Table68 <- data.frame(
             Origin = c("", origins, "Total"),
-            Premium = c(NA, Premium, Premium.sum) * magscale,
-            CurrentAge = c(maxage.traditional, CurrentAge, NA),
-            AgeUsed = c(maxage, CurrentAge.to, NA),
+            Premium = c(NA, Premium, Premium.sum),# * magscale,
+            CurrentAge = c(maxage, CurrentAge, NA),
+            AgeUsed = c(maxage.used, CurrentAge.to, NA),
             GrowthFunction = c(g, NA),
-            TruncatedGrowth = G(maxage, thetaG) - c(g, NA),
-            PremiumxELR = ELR * c(NA, Premium, Premium.sum) * magscale,
-            EstimatedReserves = c(NA, R, R.sum) * magscale,
+            TruncatedGrowth = G(maxage.used, thetaG) - c(g, NA),
+            PremiumxELR = ELR * c(NA, Premium, Premium.sum),# * magscale,
+            EstimatedReserves = c(NA, R, R.sum),# * magscale,
             stringsAsFactors = FALSE
             )
         }
@@ -664,9 +692,9 @@ ClarkCapeCod <- function(data,
             else msg <- "The parameter risk approximation produced a 'negative variance' for the following origin year (value set to zero):\n"
             df2 <- data.frame(
                 Origin = origins[ndx], 
-                Reserve = R[ndx] * magscale, 
-                ApproxVar = deltar2[ndx] * magscale^2, 
-                RelativeVar = deltar2[ndx] * magscale / R[ndx]
+                Reserve = R[ndx],# * magscale, 
+                ApproxVar = deltar2[ndx],# * magscale^2, 
+                RelativeVar = deltar2[ndx] / R[ndx]# * magscale / R[ndx]
                 )
             df2 <- format(
                 rbind(
@@ -694,9 +722,9 @@ ClarkCapeCod <- function(data,
         if (deltar2.sum<0) {
             msg <- "The parameter risk approximation produced a 'negative variance' for the Total row (value set to zero):\n"
             df2 <- data.frame(
-                Reserve = R.sum * magscale, 
-                ApproxVar = deltar2.sum * magscale^2, 
-                RelativeVar = deltar2.sum * magscale / R.sum
+                Reserve = R.sum,# * magscale, 
+                ApproxVar = deltar2.sum,# * magscale^2, 
+                RelativeVar = deltar2.sum / R.sum# * magscale / R.sum
                 )
             df2 <- format(
                 rbind(
@@ -715,28 +743,28 @@ ClarkCapeCod <- function(data,
         # Form "report table" as on p. 65 of paper
         Table65 <- data.frame(
             Origin = c(origins, "Total"),
-            CurrentValue = c(CurrentValue, CurrentValue.sum) * magscale,
-            EstimatedReserves = c(R, R.sum) * magscale,
-            ProcessSE = c(gammar, gammar.sum) * magscale,
+            CurrentValue = c(CurrentValue, CurrentValue.sum),# * magscale,
+            EstimatedReserves = c(R, R.sum),# * magscale,
+            ProcessSE = c(gammar, gammar.sum),# * magscale,
             ProcessCV = 100*round(c(gammar, gammar.sum) / c(R, R.sum), 3),
-            ParameterSE = c(deltar, deltar.sum) * magscale,
+            ParameterSE = c(deltar, deltar.sum),# * magscale,
             ParameterCV = 100*round(c(deltar, deltar.sum) / c(R, R.sum), 3),
-            TotalSE = c(totalr, totalr.sum) * magscale,
+            TotalSE = c(totalr, totalr.sum),# * magscale,
             TotalCV = 100*round(c(totalr, totalr.sum) / c(R, R.sum), 3),
             stringsAsFactors = FALSE
             )
     
-        g <- G(c(maxage, CurrentAge.to), thetaG)
+        g <- G(c(maxage.used, CurrentAge.to), thetaG)
         gInf <- G(c(Inf, CurrentAge.to), thetaG)
         Table68 <- data.frame(
             Origin = c("", origins, "Total"),
-            Premium = c(NA, Premium, Premium.sum) * magscale,
-            CurrentAge = c(maxage.traditional, CurrentAge, NA),
-            AgeUsed = c(maxage, CurrentAge.to, NA),
+            Premium = c(NA, Premium, Premium.sum),# * magscale,
+            CurrentAge = c(maxage, CurrentAge, NA),
+            AgeUsed = c(maxage.used, CurrentAge.to, NA),
             GrowthFunction = c(g, NA),
-            TruncatedGrowth = G(maxage, thetaG) - c(g, NA),
-            PremiumxELR = ELR * c(NA, Premium, Premium.sum) * magscale,
-            EstimatedReserves = c(NA, R, R.sum) * magscale,
+            TruncatedGrowth = G(maxage.used, thetaG) - c(g, NA),
+            PremiumxELR = ELR * c(NA, Premium, Premium.sum),# * magscale,
+            EstimatedReserves = c(NA, R, R.sum),# * magscale,
             stringsAsFactors = FALSE
             )
         }
@@ -747,14 +775,16 @@ ClarkCapeCod <- function(data,
             Table65=Table65,
             Table68=Table68,
             par=c(unclass(S$par)),
-            sigma2=c(unclass(sigma2)) * magscale,
-#            dR=dR,
+            sigma2=c(unclass(sigma2)),# * magscale,
+            dR = dR,# * c(rep(1, K), rep(magscale, G@np)),
             origin = workarea$origin,
             age = workarea$dev,
-            fitted = workarea$mu * magscale,
-            residuals = workarea$residuals * magscale,
-            stdresid = workarea$residuals/sqrt(sigma2*workarea$mu)#,
-#            FI=FI
+            fitted = workarea$mu,# * magscale,
+            residuals = workarea$residuals,# * magscale,
+            stdresid = workarea$residuals/sqrt(sigma2*workarea$mu),
+            FI = FI,# * FImult
+            value = S$value,
+            counts = S$counts
             ),
         class=c("clark","list")
         )
@@ -825,6 +855,16 @@ plot.clark <- function(x, ...) {
     par(mfrow=c(1,1))
     }
 
+vcov.clark <- function(object, ...) {
+    if (rcond(object$FI)<.Machine$double.eps) { # Fisher Information matrix will not invert
+        message("Fisher Information matrix is computationally singular (condition number = ",
+                format(1/rcond(object$FI), digits=3, scientific=TRUE), 
+                ")\nCovariance matrix is not available."
+                )
+        return(NA)
+        }
+    -object$sigma2*solve(object$FI)
+    }
 # FUNCTIONS AND FUNCTION CLASSES
 
 # Function Classes
@@ -875,6 +915,10 @@ setClass("GrowthFunction",
         np = "integer", 
         # function to return initial parameters before running optim
         initialGuess = "funcNull", 
+        # function to return lower "L-BFGS-B" constraint
+        LBFGSB.lower = "funcNull", 
+        # function to return upper "L-BFGS-B" constraint
+        LBFGSB.upper = "funcNull", 
         # partial derivative function, vector of length np
         dGdt = "funcNull",
         # 2nd partial derivative function, np x np matrix
@@ -959,6 +1003,14 @@ loglogistic <- new("GrowthFunction",
         omega = 2, 
         theta = median(env$Age.to, na.rm=TRUE)
         ),
+    LBFGSB.lower = function(env) c(
+        omega = .1,
+        theta = min(c(.5, env$Age.to))
+        ),
+    LBFGSB.upper = function(env) c(
+        omega = Inf,
+        theta = Inf
+        ),
     dGdt = dG.loglogisticdtheta,
     d2Gdt2 = d2G.loglogisticdtheta2
     )
@@ -1038,8 +1090,16 @@ weibull <- new("GrowthFunction",
     name = "weibull",
     np = 2L,
     initialGuess = function(env) c(
-        omega = 2, 
-        theta = median(env$Age.to, na.rm=TRUE)
+        omega = (om<-1.5),
+        theta = max(env$Age.to, na.rm=TRUE) * (log(1/.05))^(-1/om) # 95% developed at current max age
+        ),
+    LBFGSB.lower = function(env) c(
+        omega = .1,
+        theta = max(env$Age.to) / ((-log(.Machine$double.eps))^(1/2)) # 2 = omega upper
+        ),
+    LBFGSB.upper = function(env) c(
+        omega = 2,#8,
+        theta = 2 * max(env$Age.to)
         ),
     dGdt = dG.weibulldtheta,
     d2Gdt2 = d2G.weibulldtheta2
@@ -1050,6 +1110,25 @@ weibull <- new("GrowthFunction",
 LL.ODP <- function(theta, MU, G, workarea) {
     # Calculate the expected value of all observations, store in workarea.
     MU(theta, G, workarea)
+    if (any(workarea$mu<=0)) { # usually due to growth function = 0 or 1
+        #prn(theta)
+        #prn(workarea$mu)
+        msg <- c("Maximum likelihood search failure!\n",
+                "Search area bounds need to be tailored to this growth function and data.\n",
+                paste("Growth function parameters at point of failure: ",
+                    paste(tail(theta, G@np), collapse=", "),
+                    ".\n",
+                    sep=""
+                    ),
+                paste("Ages: ",
+                    paste(unique(workarea$Age.to), collapse=", "),
+                    ".\n",
+                    sep=""
+                    ),
+                "Contact package author."
+                )
+        stop(msg)
+        }
     # Do ODP-model calc for all observations, add them up.
     sum(workarea$value * log(workarea$mu) - workarea$mu)
     }
@@ -1233,7 +1312,7 @@ R.LDF <- new("dfunction",
         ##  thetaU is a vector of estimated ultimates corresponding to
         ##      each origin year being projected; it has length=nrow(Table65)
         rbind(
-            diag(del(G, from, to, thetaG)),
+            diag(delG<-del(G, from, to, thetaG), length(delG)),
             # c to remove dim
             (c(G@dGdt(to, thetaG)) - G@dGdt(from, thetaG)) * rep(thetaU, each=G@np)
             )

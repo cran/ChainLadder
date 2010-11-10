@@ -7,12 +7,15 @@ Clark Cape Cod method
 Analyze loss triangle using Clark's Cape Cod method.
 }
 \usage{
-ClarkCapeCod(data, Premium, cumulative = TRUE, adol = TRUE, 
-        maxage = c(Inf, Inf), G = "loglogistic")
+ClarkCapeCod(Triangle, Premium, cumulative = TRUE, maxage = Inf, 
+        adol = TRUE, adol.age = NULL, origin.width = NULL,
+        G = "loglogistic")
 }
 \arguments{
-  \item{data}{
+  \item{Triangle}{
 A loss triangle in the form of a matrix.
+The number of columns must be at least four;
+the number of rows may be as few as 1.
 The column names of the matrix should be able to be interpreted
 as the "age" of the losses in that column.
 The row names of the matrix should uniquely define the year of
@@ -21,12 +24,20 @@ Losses may be inception-to-date or incremental.
 }
   \item{Premium}{
 The vector of premium to use in the method.
-The length should be the same as the number of rows of \code{data}.
+If a scalar (vector of length 1) is given,
+that value will be used for all origin periods.
+(See "Examples" below.)
+If the length is greater than 1 but 
+does not equal the number of rows of \code{Triangle}
+the \code{Premium} values will be "recycled" with a warning.
 }
   \item{cumulative}{
-If \code{TRUE} (the default), values in \code{data} are
+If \code{TRUE} (the default), values in \code{Triangle} are
 inception to date.
-If \code{FALSE}, \code{data} holds incremental losses.
+If \code{FALSE}, \code{Triangle} holds incremental losses.
+}
+  \item{maxage}{
+The "ultimate" age to which losses should be projected.
 }
   \item{adol}{
 If \code{TRUE} (the default), the growth function should be applied
@@ -35,19 +46,21 @@ of losses in the origin year.
 If \code{FALSE}, the growth function should be applied
 to the length of time since the beginning of the origin year.
 }
-  \item{maxage}{
-The "ultimate" age to which losses should be projected.
-This can be a vector of length 1 or 2.
-The first element holds the ultimate age as traditionally defined, 
-namely the length of time since the beginning of the origin year.
-If the second element exists --
-which is pertinent only in the case that \code{adol} is \code{TRUE} --
-it holds the length of time from the
-average date of loss of the origin year.
-If the second element does not exist and \code{adol} is \code{TRUE},
-its value will be derived as \code{maxage[1]} minus 
-the average difference between the ages in \code{colnames(data)},
-with a warning if not all differences are the same.
+  \item{adol.age}{
+Only pertinent if \code{adol} is \code{TRUE}.
+The age of the average date of losses within an origin period
+in the same units as the "ages" of the \code{Triangle} matrix.
+If \code{NULL} (the default) it will be assumed to be half the width
+of an origin period (which would be the case if losses can be assumed
+to occur uniformly over an origin period).
+}
+  \item{origin.width}{
+Only pertinent if \code{adol} is \code{TRUE}.
+The width of an origin period
+in the same units as the "ages" of the \code{Triangle} matrix.
+If \code{NULL} (the default) it will be assumed to be the mean difference
+in the "ages" of the triangle, 
+with a warning if not all differences are equal.
 }
   \item{G}{
 A \code{character} scalar identifying the "growth function."
@@ -94,24 +107,32 @@ reasonableness of the model relative to the actual data
 }
 \value{
 A \code{list} of class "clark" with the following components:
-\itemize{
-    \item method: "Cape Cod"
-    \item growthFunction: name of the growth function
-    \item Table65: the table of losses, standard errors and CVs as shown
-    on p. 65 of the paper
-    \item Table68: the table of ages, growth function values, 
+    \item{method}{"Cape Cod"}
+    \item{growthFunction}{name of the growth function}
+    \item{Table65}{the table of losses, standard errors and CVs as shown
+    on p. 65 of the paper}
+    \item{Table68}{the table of ages, growth function values, 
     "ultimate" losses, and "reserves" as shown on p. 68 
-    of the paper
-    \item par: the estimated parameters
-    \item sigma2: the sigma-squared "scale parameter"
-    \item origin: rownames(data) from the "long format" of \code{data}
-    \item age: colnames(data) from the "long format" of \code{data}
-    \item fitted: the expected values (the "mu's") of the incremental losses
-    \item residuals: the difference between the actual and fitted values
-    \item stdresid: the standardized residuals 
+    of the paper}
+    \item{par}{the estimated parameters}
+    \item{sigma2}{the sigma-squared "scale parameter"}
+    \item{LDF}{the "to-ultimate" loss development factor
+    (sometimes called the "cumulative development factor")
+    as defined in Clark's paper}
+    \item{dR}{the gradient of the reserves function evaluated at the 
+    parameter solution point}
+    \item{origin}{rownames(Triangle) from the "long format" of \code{Triangle}}
+    \item{age}{colnames(Triangle) from the "long format" of \code{Triangle}}
+    \item{fitted}{the expected values (the "mu's") of the incremental losses}
+    \item{residuals}{the difference between the actual and fitted values}
+    \item{stdresid}{the standardized residuals 
     = residuals/sqrt(sigma2*fitted)
-    (referred to as "normalized residuals" in the paper; see p. 62)
-}
+    (referred to as "normalized residuals" in the paper; see p. 62)}
+    \item{FI}{the "Fisher Information" matrix as defined in Clark's paper
+    (i.e., without the sigma^2 value)}
+    \item{value}{the value of the loglikelihood function at the solution}
+    \item{counts}{the number of calls to the loglikelihood function
+    and its gradient function to achieve numerical convergence}
 }
 \references{
 Clark, David R., 
@@ -133,8 +154,17 @@ CC.loglogistic
 
 # Clark's "CapeCod method" also works with triangles that have  
 # more development periods than origin periods. The Premium
-# is a contrived match to the "made up" 'qincurred' data.
+# is a contrived match to the "made up" 'qincurred' Triangle.
 ClarkCapeCod(qincurred, Premium=1250+150*0:11, G="loglogistic")
+
+# Method also works for a "triangle" with only one row:
+# 1st row of GenIns; need "drop=FALSE" to avoid becoming a vector.
+ClarkCapeCod(GenIns[1, , drop=FALSE], Premium=1000000, maxage=20)
+
+# If one value of Premium is appropriate for all origin years
+# (e.g., losses are on-level and adjusted for exposure)
+# then only a single value for Premium need be provided.
+ClarkCapeCod(GenIns, Premium=1000000, maxage=20)
 
 # Use of the weibull function generates a warning that the parameter risk 
 # approximation results in some negative variances. This may be of small 
@@ -146,8 +176,8 @@ Y <- ClarkCapeCod(qincurred, Premium=1250+150*0:11, G="weibull")
 # The plot of the standardized residuals by age indicates that the more
 # mature observations are more loosely grouped than the less mature, just
 # the opposite of the behavior under the loglogistic curve.
-# This suggests that the model might be improved by analyzing the data 
-# in two different "blocks": less vs. more mature. 
+# This suggests that the model might be improved by analyzing the Triangle 
+# in two different "blocks": less mature vs. more mature. 
 # The QQ-plot shows that the tails of the empirical distribution of
 # standardized residuals are "fatter" than a standard normal. 
 # The fact that the p-value is essentially zero says that there is 
