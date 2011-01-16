@@ -18,7 +18,7 @@
 #               date of loss within the origin period?
 #           What is the maximum age to which losses should be projected?
 #           What growth function should be utilized?
-#   print and plot methods
+#   print, plot, summary, and other methods
 #   Functions
 #       Definition of "function class with derivatives"
 #           Generics to access the derivatives of a function
@@ -27,7 +27,7 @@
 #       Loglogistic growth function
 #       Weibull growth function
 #       Loglikelihood function under Clark's ODP assumption
-#       Function to calculate sigma2
+#       Function to calculate SIGMA2
 #       Expected value (MU) functions
 #           LDF Method
 #           Cape Cod Method
@@ -117,7 +117,7 @@ ClarkLDF <- function(Triangle,
     Age.from <- c(0, head(Age.to, -1L))
 
     # Let's scale the Triangle asap.
-    # Just as Clark uses sigma2 to scale to model with ODP, we will scale
+    # Just as Clark uses SIGMA2 to scale to model with ODP, we will scale
     #   losses by a large amount so that the scaled losses and the growth 
     #   function  parameters are in a closer relative magnitude. Otherwise, 
     #   the Fisher Information matrix may not invert.
@@ -138,7 +138,7 @@ ClarkLDF <- function(Triangle,
         array(dev[z], dim(Triangle))
         })
     CurrentAge.from <- getLatestCumulative(array(Age.from[z], dim(Triangle)))
-    CurrentAge.to <- getLatestCumulative(array(Age.to[z], dim(Triangle)))
+    CurrentAge.used <- CurrentAge.to <- getLatestCumulative(array(Age.to[z], dim(Triangle)))
 
     # Turn loss matrix into incremental losses, if not already
     if (cumulative) Triangle <-cum2incr(Triangle)
@@ -152,7 +152,8 @@ ClarkLDF <- function(Triangle,
     Table1.1 <- Table1.1[!is.na(Table1.1[[3L]]),]
     
     # "prime" 'workarea' with initial data
-    workarea$origin   <- Table1.1$origin
+    workarea$origin   <- Table1.1$origin # origin year (index) of the observation
+    workarea$io <- outer(workarea$origin, 1:nr, `==`) # T/F flag: is obs in origin year=column #?
     workarea$value    <- as.numeric(Table1.1$value)
     workarea$Age.from <- Table1.1$Age.from
     workarea$Age.to   <- Table1.1$Age.to
@@ -200,20 +201,23 @@ ClarkLDF <- function(Triangle,
     if (any(G@LBFGSB.lower(workarea) == thetaG | G@LBFGSB.upper(workarea) == thetaG)) 
         warning("Solution constrained at growth function boundary! Use results with caution!\n\n")
     
-    # Calculate the sigma2 "scaling parameter"
-    sigma2 <- workarea$sigma2 <- LL.ODP.sigma2(workarea)
+    # Calculate the SIGMA2 "scaling parameter"
+    SIGMA2 <- workarea$SIGMA2 <- LL.ODP.SIGMA2(workarea)
 
     # AY DETAIL LEVEL
 
-    # Expected value of reserves
-    R <- R.LDF(theta, G, CurrentAge.to, maxage)#, workarea)
+    # Expected value of reserves, all origin years
+    R <- R.LDF(theta, G, CurrentAge.to, maxage, oy=1:nr)
     # Alternatively, by developing current diagonal
     #   For LDF formula, see table at top of p. 64
-    LDF <- G(maxage, thetaG) / G(CurrentAge.to, thetaG)
-    R.alt <- (LDF - 1) * CurrentValue
+    g <- G(CurrentAge.used, thetaG)
+    g.maxage <- G(maxage.used, thetaG)
+    ldf <- 1 / g
+    ldf.truncated <- g.maxage / g
+    R.ldf.truncated <- (ldf.truncated - 1) * CurrentValue
 
     # PROCESS RISK OF RESERVES
-    gammar2 <- R * sigma2
+    gammar2 <- R * SIGMA2
     gammar <- sqrt(gammar2)
 
     # PARAMETER RISK OF RESERVES
@@ -233,7 +237,7 @@ ClarkLDF <- function(Triangle,
         ) 
 
     # Let's see if FI will invert
-    if (rcond(FI)<.Machine$double.eps) { # No
+    if (rcond(FI) < .Machine$double.eps) { # No
         message("Fisher Information matrix is computationally singular (condition number = ",
                 format(1/rcond(FI), digits=3, scientific=TRUE), 
                 ")\nParameter risk estimates not available"
@@ -258,50 +262,21 @@ ClarkLDF <- function(Triangle,
         # AY Total row
         CurrentValue.sum <- sum(CurrentValue)
         R.sum <- sum(R)
-        R.alt.sum <- sum(R.alt)
+        R.ldf.truncated.sum <- sum(R.ldf.truncated)
         gammar2.sum <- sum(gammar2)
         gammar.sum = sqrt(gammar2.sum)
         deltar2.sum <- NA
         deltar.sum <- NA
         totalr2.sum <- NA
         totalr.sum = NA
-    
-        # Form "report table" as on p. 65 of paper
-        Table65 <- data.frame(
-            Origin = c(origins, "Total"),
-            CurrentValue = c(CurrentValue, CurrentValue.sum) * magscale,
-            EstimatedReserves = c(R.alt, R.alt.sum) * magscale,
-            ProcessSE = c(gammar, gammar.sum) * magscale,
-            ProcessCV = 100*round(c(gammar, gammar.sum) / c(R.alt, R.alt.sum), 3),
-            ParameterSE = c(deltar, deltar.sum) * magscale,
-            ParameterCV = 100*round(c(deltar, deltar.sum) / c(R.alt, R.alt.sum), 3),
-            TotalSE = c(totalr, totalr.sum) * magscale,
-            TotalCV = 100*round(c(totalr, totalr.sum) / c(R.alt, R.alt.sum), 3),
-            stringsAsFactors = FALSE
-            )
-    
-        g <- G(c(maxage, CurrentAge.to), thetaG)
-        Table64 <- data.frame(
-            Origin = c("", origins, "Total"),
-            CurrentValue = c(NA, CurrentValue, CurrentValue.sum) * magscale,
-            CurrentAge = c(maxage, CurrentAge, NA),
-            AgeUsed = c(maxage.used, CurrentAge.to, NA),
-            GrowthFunction = c(g, NA),
-            LDF = c(1 / g, NA),
-            TruncatedLDF = c(G(maxage.used, thetaG) / g, NA),
-            LossesAtMaxage = c(NA, CurrentValue + R.alt, CurrentValue.sum + R.alt.sum) * magscale,
-            EstimatedReserves = c(NA, R.alt, R.alt.sum) * magscale,
-            stringsAsFactors = FALSE
-            )
-        
         }
     else {
         # Calculate the gradient matrix, dR = matrix of 1st partial derivatives
         #   for every origin year w.r.t. every parameter
-        dR <- dfdx(R.LDF, theta, G, CurrentAge.to, maxage)#, workarea)
+        dR <- dfdx(R.LDF, theta, G, CurrentAge.to, maxage.used, oy=1:nr)
         
         # Delta Method => approx var/cov matrix of reserves
-        VCOV.R <- -workarea$sigma2*t(dR)%*%solve(FI,dR)
+        VCOV.R <- -workarea$SIGMA2 * t(dR) %*% solve(FI, dR)
 
         # Origin year parameter risk estimates come from diagonal entries
         # Parameter risk for sum over all origin years = sum  over
@@ -317,9 +292,9 @@ ClarkLDF <- function(Triangle,
             else msg <- "The parameter risk approximation produced a 'negative variance' for the following origin year (value set to zero):\n"
             df2 <- data.frame(
                 Origin = origins[ndx], 
-                Reserve = R.alt[ndx] * magscale, 
+                Reserve = R.ldf.truncated[ndx] * magscale, 
                 ApproxVar = deltar2[ndx] * magscale^2, 
-                RelativeVar = deltar2[ndx] * magscale / R.alt[ndx]
+                RelativeVar = deltar2[ndx] * magscale / R.ldf.truncated[ndx]
                 )
             df2 <- format(
                 rbind(
@@ -340,16 +315,16 @@ ClarkLDF <- function(Triangle,
         # AY Total row
         CurrentValue.sum <- sum(CurrentValue)
         R.sum <- sum(R)
-        R.alt.sum <- sum(R.alt)
+        R.ldf.truncated.sum <- sum(R.ldf.truncated)
         gammar2.sum <- sum(gammar2)
         gammar.sum = sqrt(gammar2.sum)
         deltar2.sum <- sum(VCOV.R)
         if (deltar2.sum<0) {
             msg <- "The parameter risk approximation produced a 'negative variance' for the Total row (value set to zero):\n"
             df2 <- data.frame(
-                Reserve = R.alt.sum * magscale, 
+                Reserve = R.ldf.truncated.sum * magscale, 
                 ApproxVar = deltar2.sum * magscale^2, 
-                RelativeVar = deltar2.sum * magscale / R.alt.sum
+                RelativeVar = deltar2.sum * magscale / R.ldf.truncated.sum
                 )
             df2 <- format(
                 rbind(
@@ -364,56 +339,53 @@ ClarkLDF <- function(Triangle,
         deltar.sum <- sqrt(deltar2.sum)
         totalr2.sum <- gammar2.sum + deltar2.sum
         totalr.sum = sqrt(totalr2.sum)
-    
-        # Form "report table" as on p. 65 of paper
-        Table65 <- data.frame(
-            Origin = c(origins, "Total"),
-            CurrentValue = c(CurrentValue, CurrentValue.sum) * magscale,
-            EstimatedReserves = c(R.alt, R.alt.sum) * magscale,
-            ProcessSE = c(gammar, gammar.sum) * magscale,
-            ProcessCV = 100*round(c(gammar, gammar.sum) / c(R.alt, R.alt.sum), 3),
-            ParameterSE = c(deltar, deltar.sum) * magscale,
-            ParameterCV = 100*round(c(deltar, deltar.sum) / c(R.alt, R.alt.sum), 3),
-            TotalSE = c(totalr, totalr.sum) * magscale,
-            TotalCV = 100*round(c(totalr, totalr.sum) / c(R.alt, R.alt.sum), 3),
-            stringsAsFactors = FALSE
-            )
-    
-        g <- G(c(maxage, CurrentAge.to), thetaG)
-        Table64 <- data.frame(
-            Origin = c("", origins, "Total"),
-            CurrentValue = c(NA, CurrentValue, CurrentValue.sum) * magscale,
-            CurrentAge = c(maxage, CurrentAge, NA),
-            AgeUsed = c(maxage.used, CurrentAge.to, NA),
-            GrowthFunction = c(g, NA),
-            LDF = c(1 / g, NA),
-            TruncatedLDF = c(G(maxage.used, thetaG) / g, NA),
-            LossesAtMaxage = c(NA, CurrentValue + R.alt, CurrentValue.sum + R.alt.sum) * magscale,
-            EstimatedReserves = c(NA, R.alt, R.alt.sum) * magscale,
-            stringsAsFactors = FALSE
-            )
         }
 
+    # KEY: Mixed case: origin year (row level) amounts
+    #      all-lower-case: workarea (observation level) amounts
+    #      all-upper-case: model parameters
     structure(
         list(
             method = "LDF",
-            growthFunction = G@name,
-            Table65 = Table65,
-            Table64 = Table64,
-            par = c(unclass(S$par)) * c(rep(magscale, K), rep(1, G@np)),
-            sigma2 = c(unclass(sigma2)) * magscale,
-            LDF = LDF,
-            dR = dR * c(rep(1, K), rep(magscale, G@np)),
+            growthFunctionName = G@name,
+            Origin = origins,
+            CurrentValue = CurrentValue * magscale,
+            CurrentAge = CurrentAge,
+            CurrentAge.used = CurrentAge.used,
+            MAXAGE = maxage,
+            MAXAGE.USED = maxage.used,
+            FutureValue = R.ldf.truncated * magscale,
+            ProcessSE = gammar * magscale,
+            ParameterSE = deltar * magscale,
+            StdError = totalr * magscale,
+            Total = list(
+                Origin = "Total",
+                CurrentValue = CurrentValue.sum * magscale,
+                FutureValue = R.ldf.truncated.sum * magscale,
+                ProcessSE = gammar.sum * magscale,
+                ParameterSE = deltar.sum * magscale,
+                StdError = totalr.sum * magscale
+                ),
+            PAR = c(unclass(S$par)) * c(rep(magscale, K), rep(1, G@np)),
+            THETAU = thetaU,
+            THETAG = thetaG,
+            GrowthFunction = g,
+            GrowthFunctionMAXAGE = g.maxage,
+            SIGMA2 = c(unclass(SIGMA2)) * magscale,
+            Ldf = ldf,
+            LdfMAXAGE = 1/g.maxage,
+            TruncatedLdf = ldf.truncated,
+            FutureValueGradient = dR * c(rep(1, K), rep(magscale, G@np)),
             origin = workarea$origin,
             age = workarea$dev,
             fitted = workarea$mu * magscale,
             residuals = workarea$residuals * magscale,
-            stdresid = workarea$residuals/sqrt(sigma2*workarea$mu),
+            stdresid = workarea$residuals/sqrt(SIGMA2*workarea$mu),
             FI = FI * FImult,
             value = S$value,
             counts = S$counts
             ),
-        class=c("clark","list")
+        class=c("ClarkLDF", "clark", "list")
         )
     }
 
@@ -525,7 +497,7 @@ ClarkCapeCod <- function(Triangle,
         array(dev[z], dim(Triangle))
         })
     CurrentAge.from <- getLatestCumulative(array(Age.from[z], dim(Triangle)))
-    CurrentAge.to <- getLatestCumulative(array(Age.to[z], dim(Triangle)))
+    CurrentAge.used <- CurrentAge.to <- getLatestCumulative(array(Age.to[z], dim(Triangle)))
 
     # Turn loss matrix into incremental losses, if not already
     if (cumulative) Triangle <-cum2incr(Triangle)
@@ -540,7 +512,8 @@ ClarkCapeCod <- function(Triangle,
     Table1.1 <- Table1.1[!is.na(Table1.1[[3L]]),]
     
     # "prime" workarea with initial data
-    workarea$origin   <- Table1.1$origin
+    workarea$origin   <- Table1.1$origin # origin year (index) of the observation
+    workarea$io <- outer(1:nr, workarea$origin, `==`) # T/F flag: is obs in origin year=column #?
     workarea$value    <- as.numeric(Table1.1$value)
     workarea$P        <- Table1.1$P
     workarea$Age.from <- Table1.1$Age.from
@@ -587,16 +560,20 @@ ClarkCapeCod <- function(Triangle,
     if (any(G@LBFGSB.lower(workarea) == thetaG | G@LBFGSB.upper(workarea) == thetaG)) 
         warning("Solution constrained at growth function boundary! Use results with caution!\n\n")
     
-    # Calculate the sigma2 "scaling parameter"
-    sigma2 <- workarea$sigma2 <- LL.ODP.sigma2(workarea)
+    # Calculate the SIGMA2 "scaling parameter"
+    SIGMA2 <- workarea$SIGMA2 <- LL.ODP.SIGMA2(workarea)
 
     # AY DETAIL LEVEL
 
     # Expected value of reserves
     R <- R.CapeCod(theta, Premium, G, CurrentAge.to, maxage)#, workarea)
+    g <- G(CurrentAge.used, thetaG)
+    g.maxage <- G(maxage.used, thetaG)
+    ldf <- 1 / g
+    ldf.truncated <- g.maxage / g
 
     # PROCESS RISK OF RESERVES
-    gammar2 <- R * sigma2
+    gammar2 <- R * SIGMA2
     gammar <- sqrt(gammar2)
 
     # PARAMETER RISK OF RESERVES
@@ -609,7 +586,7 @@ ClarkCapeCod <- function(Triangle,
         )
 
     # Let's see if FI will invert
-    if (rcond(FI)<.Machine$double.eps) { # No
+    if (rcond(FI) < .Machine$double.eps) { # No
         message("Fisher Information matrix is computationally singular (condition number = ",
                 format(1/rcond(FI), digits=3, scientific=TRUE), 
                 ")\nParameter risk estimates not available"
@@ -641,42 +618,14 @@ ClarkCapeCod <- function(Triangle,
         deltar.sum <- NA
         totalr2.sum <- NA
         totalr.sum = NA
-    
-        # Form "report table" as on p. 65 of paper
-        Table65 <- data.frame(
-            Origin = c(origins, "Total"),
-            CurrentValue = c(CurrentValue, CurrentValue.sum),# * magscale,
-            EstimatedReserves = c(R, R.sum),# * magscale,
-            ProcessSE = c(gammar, gammar.sum),# * magscale,
-            ProcessCV = 100*round(c(gammar, gammar.sum) / c(R, R.sum), 3),
-            ParameterSE = c(deltar, deltar.sum),# * magscale,
-            ParameterCV = 100*round(c(deltar, deltar.sum) / c(R, R.sum), 3),
-            TotalSE = c(totalr, totalr.sum),# * magscale,
-            TotalCV = 100*round(c(totalr, totalr.sum) / c(R, R.sum), 3),
-            stringsAsFactors = FALSE
-            )
-    
-        g <- G(c(maxage.used, CurrentAge.to), thetaG)
-        gInf <- G(c(Inf, CurrentAge.to), thetaG)
-        Table68 <- data.frame(
-            Origin = c("", origins, "Total"),
-            Premium = c(NA, Premium, Premium.sum),# * magscale,
-            CurrentAge = c(maxage, CurrentAge, NA),
-            AgeUsed = c(maxage.used, CurrentAge.to, NA),
-            GrowthFunction = c(g, NA),
-            TruncatedGrowth = G(maxage.used, thetaG) - c(g, NA),
-            PremiumxELR = ELR * c(NA, Premium, Premium.sum),# * magscale,
-            EstimatedReserves = c(NA, R, R.sum),# * magscale,
-            stringsAsFactors = FALSE
-            )
         }
     else {
         # Calculate the gradient matrix, dR = matrix of 1st partial derivatives
         #   for every origin year w.r.t. every parameter
-        dR <- dfdx(R.CapeCod, theta, Premium, G, CurrentAge.to, maxage)#, workarea)
+        dR <- dfdx(R.CapeCod, theta, Premium, G, CurrentAge.to, maxage.used)#, workarea)
         
         # Delta Method => approx var/cov matrix of reserves
-        VCOV.R <- -workarea$sigma2*t(dR)%*%solve(FI,dR)
+        VCOV.R <- -workarea$SIGMA2 * t(dR) %*% solve(FI, dR)
     
         # Origin year parameter risk estimates come from diagonal entries
         # Parameter risk for sum over all origin years = sum  over
@@ -739,59 +688,111 @@ ClarkCapeCod <- function(Triangle,
         deltar.sum <- sqrt(deltar2.sum)
         totalr2.sum <- gammar2.sum + deltar2.sum
         totalr.sum = sqrt(totalr2.sum)
-    
-        # Form "report table" as on p. 65 of paper
-        Table65 <- data.frame(
-            Origin = c(origins, "Total"),
-            CurrentValue = c(CurrentValue, CurrentValue.sum),# * magscale,
-            EstimatedReserves = c(R, R.sum),# * magscale,
-            ProcessSE = c(gammar, gammar.sum),# * magscale,
-            ProcessCV = 100*round(c(gammar, gammar.sum) / c(R, R.sum), 3),
-            ParameterSE = c(deltar, deltar.sum),# * magscale,
-            ParameterCV = 100*round(c(deltar, deltar.sum) / c(R, R.sum), 3),
-            TotalSE = c(totalr, totalr.sum),# * magscale,
-            TotalCV = 100*round(c(totalr, totalr.sum) / c(R, R.sum), 3),
-            stringsAsFactors = FALSE
-            )
-    
-        g <- G(c(maxage.used, CurrentAge.to), thetaG)
-        gInf <- G(c(Inf, CurrentAge.to), thetaG)
-        Table68 <- data.frame(
-            Origin = c("", origins, "Total"),
-            Premium = c(NA, Premium, Premium.sum),# * magscale,
-            CurrentAge = c(maxage, CurrentAge, NA),
-            AgeUsed = c(maxage.used, CurrentAge.to, NA),
-            GrowthFunction = c(g, NA),
-            TruncatedGrowth = G(maxage.used, thetaG) - c(g, NA),
-            PremiumxELR = ELR * c(NA, Premium, Premium.sum),# * magscale,
-            EstimatedReserves = c(NA, R, R.sum),# * magscale,
-            stringsAsFactors = FALSE
-            )
         }
+
+    # KEY: Mixed case: origin year (row level) amounts
+    #      all-lower-case: workarea (observation level) amounts
     structure(
         list(
             method = "CapeCod",
-            growthFunction = G@name,
-            Table65=Table65,
-            Table68=Table68,
-            par=c(unclass(S$par)),
-            sigma2=c(unclass(sigma2)),# * magscale,
-            dR = dR,# * c(rep(1, K), rep(magscale, G@np)),
+            growthFunctionName = G@name,
+            Origin = origins,
+            Premium = Premium,
+            CurrentValue = CurrentValue,
+            CurrentAge = CurrentAge,
+            CurrentAge.used = CurrentAge.used,
+            MAXAGE = maxage,
+            MAXAGE.USED = maxage.used,
+            FutureValue = R,
+            ProcessSE = gammar,
+            ParameterSE = deltar,
+            StdError = totalr,
+            Total = list(
+                Origin = "Total",
+                Premium = Premium.sum,
+                CurrentValue = CurrentValue.sum,
+                FutureValue = R.sum,
+                ProcessSE = gammar.sum,
+                ParameterSE = deltar.sum,
+                StdError = totalr.sum
+                ),
+            PAR=c(unclass(S$par)),
+            ELR = ELR,
+            THETAG = thetaG,
+            GrowthFunction = g,
+            GrowthFunctionMAXAGE = g.maxage,
+            FutureGrowthFactor = g.maxage - g,
+            SIGMA2=c(unclass(SIGMA2)),# * magscale,
+            Ldf = ldf,
+            LdfMAXAGE = 1/g.maxage,
+            TruncatedLdf = ldf.truncated,
+            FutureValueGradient = dR,
             origin = workarea$origin,
             age = workarea$dev,
             fitted = workarea$mu,# * magscale,
             residuals = workarea$residuals,# * magscale,
-            stdresid = workarea$residuals/sqrt(sigma2*workarea$mu),
-            FI = FI,# * FImult
+            stdresid = workarea$residuals/sqrt(SIGMA2*workarea$mu),
+            FI = FI,
             value = S$value,
             counts = S$counts
             ),
-        class=c("clark","list")
+        class=c("ClarkCapeCod", "clark", "list")
+        )
+
+    }
+
+summary.ClarkLDF <- function(object, ...) {
+    data.frame(
+        Origin = c(object$Origin, object$Total$Origin),
+        CurrentValue = c(object$CurrentValue, object$Total$CurrentValue),
+        Ldf = c(object$TruncatedLdf, NA),
+        UltimateValue = c(object$CurrentValue, object$Total$CurrentValue) + c(object$FutureValue, object$Total$FutureValue),
+        FutureValue = c(object$FutureValue, object$Total$FutureValue),
+        StdError = c(object$StdError, object$Total$StdError),
+        c(object$StdError, object$Total$StdError) / c(object$FutureValue, object$Total$FutureValue),
+        stringsAsFactors = FALSE
         )
     }
 
-print.clark <- function(x, ...) 
-    print( format(x$Table65, big.mark = ",", digits = 3), row.names = FALSE, ...)
+print.ClarkLDF <- function(x, Amountdigits=0, LDFdigits=3, CVdigits=3, ...) {
+    y <- summary(x)
+    print(cbind(format(y[1]), 
+                format(round(y[2], Amountdigits), big.mark=","), 
+                Ldf = c(head(format(round(y[[3]], LDFdigits)), -1), ""), 
+                format(round(y[4:6], Amountdigits), big.mark=","), 
+                `CV%` = formatC(100*round(y[[7]], CVdigits), format="f", digits=CVdigits-2)
+                ),
+          row.names = FALSE, 
+          ...)
+    }
+
+summary.ClarkCapeCod <- function(object, ...) {
+    data.frame(
+        Origin = c(object$Origin, object$Total$Origin),
+        CurrentValue = c(object$CurrentValue, object$Total$CurrentValue),
+        Premium = c(object$Premium, object$Total$Premium),
+        ELR = c(rep(object$ELR, length(object$Premium)), NA),
+        FutureGrowthFactor = c(object$FutureGrowthFactor, NA),
+        FutureValue = c(object$FutureValue, object$Total$FutureValue),
+        UltimateValue = c(object$CurrentValue, object$Total$CurrentValue) + c(object$FutureValue, object$Total$FutureValue),
+        StdError = c(object$StdError, object$Total$StdError),
+        CV = c(object$StdError, object$Total$StdError) / c(object$FutureValue, object$Total$FutureValue),
+        stringsAsFactors = FALSE
+        )
+    }
+
+print.ClarkCapeCod <- function(x, Amountdigits=0, ELRdigits=3, Gdigits=3, CVdigits=3, ...) {
+    y <- summary(x)
+    print(cbind(format(y[1]), 
+                format(round(y[2:3], Amountdigits), big.mark=",", scientific=FALSE), 
+                ELR = c(head(formatC(round(y[[4]], ELRdigits), digits=ELRdigits, format="f"), -1), ""), 
+                FutureGrowthFactor = c(head(formatC(round(y[[5]],   Gdigits), digits=  Gdigits, format="f"), -1), ""), 
+                format(round(y[6:8], Amountdigits), big.mark=","), 
+                `CV%` = formatC(100*round(y[[9]], CVdigits), format="f", digits=CVdigits-2)
+                ),
+          row.names = FALSE, 
+          ...)
+    }
 
 plot.clark <- function(x, ...) {
     # We will plot the residuals as functions of
@@ -863,8 +864,61 @@ vcov.clark <- function(object, ...) {
                 )
         return(NA)
         }
-    -object$sigma2*solve(object$FI)
+    -object$SIGMA2*solve(object$FI)
     }
+
+Table65 <- function(x) { # Form "report table" as on p. 65 of paper
+    data.frame(
+        Origin = c(x$Origin, x$Total$Origin),
+        CurrentValue = c(x$CurrentValue, x$Total$CurrentValue),
+        FutureValue = c(x$FutureValue, x$Total$FutureValue),
+        ProcessSE = c(x$ProcessSE, x$Total$ProcessSE),
+        ProcessCV = 100 * round(c(x$ProcessSE, x$Total$ProcessSE) / c(x$FutureValue, x$Total$FutureValue), 3),
+        ParameterSE = c(x$ParameterSE, x$Total$ParameterSE),
+        ParameterCV = 100 * round(c(x$ParameterSE, x$Total$ParameterSE) / c(x$FutureValue, x$Total$FutureValue), 3),
+        StdError = c(x$StdError, x$Total$StdError),
+        TotalCV = 100 * round(c(x$StdError, x$Total$StdError) / c(x$FutureValue, x$Total$FutureValue), 3),
+        stringsAsFactors = FALSE
+        )
+    }
+    
+Table64 <- function(x) {
+    if (!inherits(x, "ClarkLDF")) {
+        warning(sQuote(deparse(substitute(x))), " is not a ClarkLDF model.")
+        return(NULL)
+        }
+    data.frame(
+        Origin = c("", x$Origin, x$Total$Origin),
+        CurrentValue = c(NA, x$CurrentValue, x$Total$CurrentValue),
+        CurrentAge = c(x$MAXAGE, x$CurrentAge, NA),
+        AgeUsed = c(x$MAXAGE.USED, x$CurrentAge.used, NA),
+        GrowthFunction = c(x$GrowthFunctionMAXAGE, x$GrowthFunction, NA),
+        Ldf = c(x$LdfMAXAGE, x$Ldf, NA),
+        TruncatedLdf = c(1.0, x$TruncatedLdf, NA),
+        LossesAtMaxage = c(NA, x$CurrentValue + x$FutureValue, x$Total$CurrentValue + x$Total$FutureValue),
+        FutureValue = c(NA, x$FutureValue, x$Total$FutureValue),
+        stringsAsFactors = FALSE
+        )
+    }
+
+Table68 <- function(x) {
+    if (!inherits(x, "ClarkCapeCod")) {
+        warning(sQuote(deparse(substitute(x))), " is not a ClarkCapeCod model.")
+        return(NULL)
+        }
+    data.frame(
+        Origin = c("", x$Origin, x$Total$Origin),
+        Premium = c(NA, x$Premium, x$Total$Premium),
+        CurrentAge = c(x$MAXAGE, x$CurrentAge, NA),
+        AgeUsed = c(x$MAXAGE.USED, x$CurrentAge.used, NA),
+        GrowthFunction = c(x$GrowthFunctionMAXAGE, x$GrowthFunction, NA),
+        FutureGrowthFactor = x$GrowthFunctionMAXAGE - c(x$GrowthFunctionMAXAGE, x$GrowthFunction, NA),
+        PremiumxELR = x$ELR * c(NA, x$Premium, x$Total$Premium),
+        FutureValue = c(NA, x$FutureValue, x$Total$FutureValue),
+        stringsAsFactors = FALSE
+        )
+    }
+
 # FUNCTIONS AND FUNCTION CLASSES
 
 # Function Classes
@@ -950,17 +1004,16 @@ dG.loglogisticdtheta <- function(x, theta) {
     dydom <- y / (xth^om + 1) * log(xth)
     tom <- th^om
     dydth <- y * tom / (x^om + tom) * (-om / th)
-    # Pancake adds new dimension in row direction. Can create column matrix.
-    dtheta <- rbind(dydom, dydth)
+    # Sandwich columns together.
+    dtheta <- cbind(dydom, dydth)
     # If x <= 0, Inf, derivative = 0 by definition  (log returns NA)
     dtheta[is.na(dtheta)] <- 0
-    rownames(dtheta) <- names(theta)
     dtheta
     }
 
 d2G.loglogisticdtheta2 <- function(x, theta) {
     if (any(theta <= 0)) return(
-        array(0, dim = if (length(x) > 1L) c(4L, length(x)) else c(2L, 2L))
+        array(0, dim = if (length(x) > 1L) c(length(x), 4L) else c(2L, 2L))
         )
     om <- theta[1L]
     th <- theta[2L]
@@ -981,13 +1034,10 @@ d2G.loglogisticdtheta2 <- function(x, theta) {
     d2ydth2[ndx] <- 0
     d2ydomdth[ndx] <- 0
     
-    if (length(x)>1L) structure(
+    if (length(x)>1L)
         # Create a matrix where each column holds an observation's
         #   d2 matrix "stretched out" into a vector of length 4
-        rbind(d2ydom2, d2ydomdth, d2ydomdth, d2ydth2),
-        dim = c(4L, length=length(x)),
-        dimnames = list(c(names(theta), rep(NA, 2L)), names(x))
-        )
+        cbind(d2ydom2, d2ydomdth, d2ydomdth, d2ydth2)
     else array(
         c(d2ydom2, d2ydomdth, d2ydomdth, d2ydth2),
         dim = c(2L, 2L),
@@ -1040,17 +1090,16 @@ dG.weibulldtheta <- function(x, theta) {
     v <- exp(-u) * u
     dydom <- v * log(xth)
     dydth <- -v * om / th
-    # Pancake adds new dimension in row direction. Can create column matrix.
-    dtheta <- rbind(dydom, dydth)
+    # Sandwich columns together.
+    dtheta <- cbind(dydom, dydth)
     # If x <= 0, Inf, derivative = 0 by definition  (log returns NA)
     dtheta[is.na(dtheta)] <- 0
-    rownames(dtheta) <- names(theta)
     dtheta
     }
 
 d2G.weibulldtheta2 <- function(x, theta) {
     if (any(theta <= 0)) return(
-        array(0, dim = if (length(x) > 1L) c(4L, length(x)) else c(2L, 2L))
+        array(0, dim = if (length(x) > 1L) c(length(x), 4L) else c(2L, 2L))
         )
     om <- theta[1L]
     th <- theta[2L]
@@ -1071,13 +1120,10 @@ d2G.weibulldtheta2 <- function(x, theta) {
     d2ydth2[ndx] <- 0
     d2ydomdth[ndx] <- 0
     
-    if (length(x)>1L) structure(
+    if (length(x)>1L)
         # Create a matrix where each column holds an observation's
         #   d2 matrix "stretched out" into a vector of length 4
-        rbind(d2ydom2, d2ydomdth, d2ydomdth, d2ydth2),
-        dim = c(4L, length=length(x)),
-        dimnames = list(c(names(theta), rep(NA, 2L)), names(x))
-        )
+        cbind(d2ydom2, d2ydomdth, d2ydomdth, d2ydth2)
     else array(
         c(d2ydom2, d2ydomdth, d2ydomdth, d2ydth2),
         dim = c(2L, 2L),
@@ -1135,17 +1181,24 @@ LL.ODP <- function(theta, MU, G, workarea) {
 
 dLL.ODPdt <- function(theta, MU, G, workarea) {
     # Calculate the gradient for all observations, store in workarea.
-    #   Creates workarea$dmudt
+    # Create workarea$dmudt
     dfdx(MU, theta, G, workarea)
-    # Must return a vector for optim, I believe, rt a column matrix
-    c(workarea$dmudt %*% (workarea$value/workarea$mu-1))
+    # ... and an intermediate value used in second derivative
+    workarea$cmuminus1 <- workarea$value/workarea$mu-1
+    # Return a vector of column sums
+    .Internal(colSums(
+                workarea$cmuminus1 * workarea$dmudt,
+                (dm <- dim(workarea$dmudt))[1L], 
+                dm[2L], 
+                FALSE
+                ))  
     }
 
 d2LL.ODPdt2 <- function(theta, MU, G, workarea) {
     # Calculate all the 2nd derivatives of MU
     d2fdx2(MU, theta, G, workarea)
     # Calculate the hessian matrix for every observation, store as a 
-    #   column in a matrix with # cols = # obs, add up all the 
+    #   row in a matrix with # rows = # obs, add up all the 
     #   matrices, and reshape.
     # For each obs, the hessian matrix is the matrix of second partial 
     #   derivatives of LL. The first term is the product of the 
@@ -1154,23 +1207,24 @@ d2LL.ODPdt2 <- function(theta, MU, G, workarea) {
     #   The second term is the outer product of (not the square of --
     #   we need a matrix not a vector) two first partial derivatives
     #   of the MU function times the quantity cit/mu^2.
-    structure(
-        rowSums(
-            sapply(
-                seq.int(length=workarea$nobs), 
-                function(i)
-                    workarea$d2mudt2[,i] * rep(workarea$value[i]/unname(workarea$mu[i]) - 1, each=length(theta)^2) -
-                    workarea$value[i] / (workarea$mu[i]*workarea$mu[i]) *
-                    c(outer(workarea$dmudt[,i], workarea$dmudt[,i], "*"))
-                )
-            ),
-        dim=c(length(theta), length(theta))
-        )
+    y <- .Internal(colSums(
+                workarea$cmuminus1 * workarea$d2mudt2 -
+                (workarea$value/(workarea$mu^2)) *
+                    t(vapply(1:workarea$nobs, function(i)
+                        c(outer(workarea$dmudt[i, ], workarea$dmudt[i, ])),
+                        vector("double", length(theta)^2)
+                        )),
+                (dm <- dim(workarea$d2mudt2))[1L], # 55
+                dm[2L],                            # 144
+                FALSE
+                ))  
+    dim(y) <- rep(length(theta), 2)
+    y
     }
 
-LL.ODP.sigma2 <- function(workarea) {
+LL.ODP.SIGMA2 <- function(workarea) {
     workarea$residuals <- workarea$value-workarea$mu
-    return(workarea$sigma2 <- 
+    return(workarea$SIGMA2 <- 
         sum(workarea$residuals^2/workarea$mu) / (workarea$nobs-workarea$np)
         )
     }
@@ -1184,47 +1238,39 @@ MU.LDF <- new("dfunction",
     # G        = growth function (eg, loglogistic or weibull)
     # workarea = environment where intermediate values are stored
     function(theta, G, workarea) {
-        Useq        <- seq.int(length=length(theta)-G@np)
-        thetaU      <- theta[Useq]
-        thetaG      <- theta[seq.int(length=G@np, to=length(theta))]
-        workarea$io <- outer(Useq, workarea$origin, `==`)
-        workarea$u  <- thetaU[workarea$origin] ## or thetaU %*% workarea$io
-        workarea$delG <- del(G, workarea$Age.from, workarea$Age.to, thetaG)
+        lent <- length(theta)
+        workarea$thetaU      <- theta[1L:(lenu<-lent-G@np)]
+        workarea$thetaG      <- theta[(lenu+1):lent]
+        workarea$u  <- workarea$thetaU[workarea$origin] ## or thetaU %*% workarea$io
+        workarea$delG <- del(G, workarea$Age.from, workarea$Age.to, workarea$thetaG)
         workarea$mu <- workarea$u * workarea$delG
         },
     dfdx = function(theta, G, workarea) {
-        thetaU      <- theta[seq.int(length=length(theta)-G@np)]
-        thetaG      <- theta[seq.int(length=G@np, to=length(theta))]
-        workarea$deldG <- del(G@dGdt, workarea$Age.from, workarea$Age.to, thetaG)
-        # Pancake
-        workarea$dmudt <- rbind(
-            workarea$io * rep(workarea$delG, each=length(thetaU)),
-            workarea$deldG * rep(workarea$u, each=G@np)
+        workarea$deldG <- del(G@dGdt, workarea$Age.from, workarea$Age.to, workarea$thetaG)
+        # Sandwich
+        workarea$dmudt <- cbind(
+            workarea$delG * workarea$io,
+            workarea$u * workarea$deldG
             )
         },
     d2fdx2 = function(theta, G, workarea) {
-        # Separately calculate the three matrices for each obs:
-        #   d2MUdthetaU2, d2MUdthetaUdthetaG, dtMUdthetaG2
+        # Separately calculate the four submatrices for each obs:
+        #   d2MUdthetaU2, d2MUdthetaUdthetaG, t(d2MUdthetaUdthetaG), and dtMUdthetaG2
         # Bind them into one hessian matrix for each obs.
         if (!exists("deldG", env=workarea)) stop("gr=NULL? Must run the derivatives.")
-        K <- length(theta) - G@np
-        K1 <- seq.int(K)
-        thetaU      <- theta[K1]
-        thetaG      <- theta[seq.int(length = G@np, to = length(theta))]
         
-        # The result of the following will be a matrix with a column for 
-        #   every observation. Each column is the hessian matrix for
-        #   that observation, automatically "stretched out" into a 
-        #   column vector, the default behavior of the sapply function.
-        U2 <- array(0, c(K, K))
-        workarea$d2mudt2 <- sapply(seq.int(workarea$nobs), function(i) {
-            # Cross partials of thetaU and thetaG
-            crossPartials.UG <- structure(workarea$deldG[,i], dim = c(1L, G@np)) %x% workarea$io[K1, i]
+        # The result of the following will be a matrix with a row for 
+        #   every observation. Each row is the hessian matrix for
+        #   that observation, "stretched out" into a row vector.
+        U2 <- array(0, rep(length(workarea$thetaU), 2))
+        workarea$d2mudt2 <- t(vapply(1L:workarea$nobs, function(i) {
+            # Cross partials of thetaU and thetaG: 10x1 %*% 1x2 = 10x2
+            crossPartials.UG <- workarea$io[i, ] %*% t(workarea$deldG[i, ])
             # Cross partials of thetaG and thetaG
-            crossPartials.GG <- workarea$u[i] * del(G@d2Gdt2, workarea$Age.from[i], workarea$Age.to[i], thetaG)
-            rbind(cbind(U2, crossPartials.UG),
-                  cbind(t(crossPartials.UG), crossPartials.GG))
-            })
+            crossPartials.GG <- workarea$u[i] * del(G@d2Gdt2, workarea$Age.from[i], workarea$Age.to[i], workarea$thetaG)
+            c(rbind(cbind(U2, crossPartials.UG),
+                  cbind(t(crossPartials.UG), crossPartials.GG)))
+            }, vector("double", length(theta)^2)))
         }
     )
 
@@ -1235,41 +1281,39 @@ MU.CapeCod <- new("dfunction",
     # G        = growth function (eg, loglogistic or weibull)
     # workarea = environment where intermediate values are stored
     function(theta, G, workarea) {
-        ELR         <- theta[1L]
-        thetaG      <- theta[seq.int(length=G@np, to=length(theta))]
-        workarea$u  <- ELR * workarea$P
-        workarea$delG <- del(G, workarea$Age.from, workarea$Age.to, thetaG)
+        workarea$ELR         <- theta[1L]
+        workarea$thetaG      <- theta[2L:length(theta)]
+        workarea$u  <- workarea$ELR * workarea$P
+        workarea$delG <- del(G, workarea$Age.from, workarea$Age.to, workarea$thetaG)
         workarea$mu <- workarea$u * workarea$delG
         },
     dfdx = function(theta, G, workarea) {
-        ELR         <- theta[1L]
-        thetaG      <- theta[seq.int(length=G@np, to=length(theta))]
-        workarea$deldG <- del(G@dGdt, workarea$Age.from, workarea$Age.to, thetaG)
-        # Pancake
-        workarea$dmudt <- rbind(
+        workarea$deldG <- del(G@dGdt, workarea$Age.from, workarea$Age.to, workarea$thetaG)
+        # Sandwich
+        workarea$dmudt <- cbind(
             workarea$P * workarea$delG,
-            workarea$deldG * rep(workarea$u, each=G@np)
+            workarea$u * workarea$deldG
             )
         },
     d2fdx2 = function(theta, G, workarea) {
-        # Separately calculate the three matrices for each obs:
-        #   d2MUdthetaU2, d2MUdthetaUdthetaG, dtMUdthetaG2
+        # Separately calculate the four submatrices for each obs:
+        #   d2MUdELR2, d2MUdELRdthetaG, t(d2MUdELRdthetaG), and dtMUdthetaG2
         # Bind them into one hessian matrix for each obs.
         if (!exists("deldG", env=workarea)) stop("gr=NULL? Must run the derivatives.")
-        thetaG      <- theta[seq.int(length = G@np, to = length(theta))]
-        # The result of the following will be a matrix with a column for 
-        #   every observation. Each column is the hessian matrix for
-        #   that observation, automatically "stretched out" into a 
-        #   column vector, the default behavior of the sapply function.
-        workarea$d2mudt2 <- sapply(seq.int(workarea$nobs), function(i) {
-            # Cross partials of thetaU and thetaG
-            crossPartials.UG <- structure(workarea$deldG[,i], dim = c(1L, G@np)) * workarea$P[i]
+        # The result of the following will be a matrix with a row for 
+        #   every observation. Each row is the hessian matrix for
+        #   that observation, "stretched out" into a column vector.
+        ELR2 <- 0.0
+        workarea$d2mudt2 <- t(vapply(seq.int(workarea$nobs), function(i) {
+            # Cross partials of thetaU and thetaG: 10x1 %*% 1x2 = 10x2
+            crossPartials.ELRG <- t(workarea$deldG[i, ])
             # Cross partials of thetaG and thetaG
-            crossPartials.GG <- workarea$u[i] * 
-                                del(G@d2Gdt2, workarea$Age.from[i], workarea$Age.to[i], thetaG)
-            rbind(c(0, crossPartials.UG),
-                  cbind(t(crossPartials.UG), crossPartials.GG))
-            })
+            crossPartials.GG <- workarea$u[i] * del(G@d2Gdt2, workarea$Age.from[i], workarea$Age.to[i], workarea$thetaG)
+            c(rbind(c(ELR2, crossPartials.ELRG),
+                    cbind(t(crossPartials.ELRG), crossPartials.GG)))
+            }, vector("double", length(theta)^2)))
+
+
         }
     )
 
@@ -1280,41 +1324,39 @@ MU.CapeCod <- new("dfunction",
 R.LDF <- new("dfunction",
     # theta    = vector of parameters: U followed by omega and theta
     # G        = growth function (eg, loglogistic or weibull)
-    # workarea = environment where intermediate values are stored
-    function(theta, G, from, to){#, workarea) {
-        K      <- length(theta) - G@np
-        K1     <- seq.int(K)
-        thetaU <- theta[K1]
-        thetaG <- theta[seq.int(length = G@np, to = length(theta))]
-        thetaU * del(G, from, to, thetaG )
+    # from = age from after which losses are unpaid
+    # to   = "ultimate" age. Could be a scalar
+    # oy       = vector of origin years indices for selecting entries in thetaU
+    function(theta, G, from, to, oy){
+        lent   <- length(theta)
+        thetaU <- theta[1L:(K <- lent - G@np)]
+        thetaG <- theta[(K+1):lent]
+        thetaU[oy] * del(G, from, to, thetaG)
         },
-    dfdx = function(theta, G, from, to){#, workarea) {
+    dfdx = function(theta, G, from, to, oy){
         # R is a vector valued function (think "column matrix").
-        # Taking the partials adds a new dimension ... put at beginning.
-        # So dR is a matrix valued function where nrows=length(theta)
-        #   and ncol = nrow(R)
-        K      <- length(theta) - G@np
-        K1     <- seq.int(K)
-        thetaU <- theta[K1]
-        thetaG <- theta[seq.int(length = G@np, to = length(theta))]
+        # Taking the partials adds a new dimension ... put at beginning
+        #   with rows corresponding to the parameters.
+        # So dR is a matrix valued function where ncols=length(from)
+        #   and nrow = length(theta)
+        # 'to' can be a scalar (e.g., maxage)
+        if (length(to)<2L) to <- rep(to, length.out=length(from))
+        if (length(to)!=length(from)) stop("Unequal 'from', 'to'")
+        lent   <- length(theta)
+        thetaU <- theta[1L:(K <- lent - G@np)]
+        thetaG <- theta[(K+1):lent]
         # dR
         # |A 0 0 . 0 | A: partial of R_ay wrt thetaU
         # |0 A 0 . . | B: partial of R_ay wrt thetaG
         # |0 0 .   . |
         # |. . . A 0 |
         # |0 0 . 0 A |
-        # |B . . . B |
-        ##A <- diag(del(G, from, to, thetaG))
-        ##B <- del(G@dGdt, from, to, thetaG) %*% thetaU
-        ##  del(G@dGdt, from, to, thetaG) is a nrow(Table65) x G@np matrix --
-        ##      a row for each origin year in Table65, a column for each
-        ##      parameter in the new derivative dimension
-        ##  thetaU is a vector of estimated ultimates corresponding to
-        ##      each origin year being projected; it has length=nrow(Table65)
+        # |B B ... B |
+        ##  Number of rows (~ parameters) is fixed
+        ##  Number of columns (~ origin years) can vary
         rbind(
-            diag(delG<-del(G, from, to, thetaG), length(delG)),
-            # c to remove dim
-            (c(G@dGdt(to, thetaG)) - G@dGdt(from, thetaG)) * rep(thetaU, each=G@np)
+            del(G, from, to, thetaG) * outer(oy, 1L:K, `==`),
+            t(thetaU[oy] * del(G@dGdt, from, to, thetaG))
             )
         },
     d2fdx2 = NULL # not needed at this point
@@ -1323,27 +1365,32 @@ R.LDF <- new("dfunction",
 R.CapeCod <- new("dfunction",
     # theta    = vector of parameters: U followed by omega and theta
     # G        = growth function (eg, loglogistic or weibull)
-    # workarea = environment where intermediate values are stored
-    function(theta, Premium, G, from, to){#, workarea) {
-        ELR    <- theta[1L]
-        thetaG <- theta[seq.int(length = G@np, to = length(theta))]
+    # from = age from after which losses are unpaid
+    # to   = "ultimate" age. Could be a scalar
+    # oy       = vector of origin years indices for selecting entries in thetaU
+    function(theta, Premium, G, from, to){
+        ELR         <- theta[1L]
+        thetaG      <- theta[2L:length(theta)]
         ELR * Premium * del(G, from, to, thetaG )
         },
-    dfdx = function(theta, Premium, G, from, to){#, workarea) {
+    dfdx = function(theta, Premium, G, from, to){
         # R is a vector valued function (think "column matrix").
-        # Taking the partials adds a new dimension ... put at beginning.
-        # So dR is a matrix valued function where nrows=length(theta)
-        #   and ncol = nrow(R)
-        ELR    <- theta[1L]
-        thetaG <- theta[seq.int(length = G@np, to = length(theta))]
+        # Taking the partials adds a new dimension ... put at beginning
+        #   with rows corresponding to the parameters.
+        # So dR is a matrix valued function where ncols=length(from)
+        #   and nrow = length(theta)
+        # 'to' can be a scalar (e.g., maxage)
+        if (length(to)<2L) to <- rep(to, length.out=length(from))
+        if (length(to)!=length(from)) stop("Unequal 'from', 'to'")
+        ELR         <- theta[1L]
+        thetaG      <- theta[2L:length(theta)]
         # dR
-        # |A A A . A | A: partial of R_ay wrt ELR
-        # |B . . . B | B: partial of R_ay wrt thetaG
-        # |B . . . B | 
-        ##  Columns ~ origin years, Rows ~ parameters
+        # |A| A: partial of R_ay wrt ELR
+        # |B| B: partial of R_ay wrt thetaG
+        ##  Rows ~ origin years (variable), columns ~ parameters (fixed)
         rbind(
-            ELR=Premium * del(G, from, to, thetaG),
-            del(G@dGdt, from, rep(to, length(from)), thetaG) * rep(ELR * Premium, each=G@np)
+            ELR = Premium * del(G, from, to, thetaG),
+            t(ELR * Premium * del(G@dGdt, from, to, thetaG))
             )
         },
     d2fdx2 = NULL # not needed at this point
