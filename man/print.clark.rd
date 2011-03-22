@@ -9,9 +9,11 @@ of the ClarkLDF and ClarkCapeCod methods.
 }
 \usage{
 %- \method{print}{clark}(x, \dots)
-\method{print}{ClarkLDF}(x, Amountdigits=0, LDFdigits=3, CVdigits=3, \dots)
+\method{print}{ClarkLDF}(x, Amountdigits=0, LDFdigits=3, CVdigits=3, 
+            row.names = FALSE, \dots)
 
-\method{print}{ClarkCapeCod}(x, Amountdigits=0, ELRdigits=3, Gdigits=3, CVdigits=3, \dots)
+\method{print}{ClarkCapeCod}(x, Amountdigits=0, ELRdigits=3, Gdigits=4, CVdigits=3,
+            row.names = FALSE, \dots)
 
 }
 \arguments{
@@ -26,8 +28,12 @@ of the ClarkLDF and ClarkCapeCod methods.
     \item{ELRdigits}{number of digits to display to the right of the decimal point for the
         expected loss ratio (ELR) column}
     \item{Gdigits}{number of digits to display to the right of the decimal point for the
-        "growth function factor" column}
-\item{\dots}{
+        "growth function factor" column; 
+        default of 4 conforms with the table on pp. 67, 68 of Clark's paper}
+    \item{row.names}{logical (or character vector), 
+        indicating whether (or what) row names should be printed
+        (same as for \code{\link{print.data.frame}})}
+    \item{\dots}{
 further arguments passed to \code{print}
 }
 }

@@ -1,6 +1,6 @@
 # Clark method from 2003 eForum paper
 # Author: Daniel Murphy
-# Date: October 31, 2010
+# Date: October 31, 2010 - 2011
 # Includes:
 #   LDF and Cape Cod methods
 #   Two growth functions -- loglogistic and weibull
@@ -34,6 +34,7 @@
 #       Reserve Functions
 #           LDF Method
 #           Cape Cod Method
+require(actuar) # for its fast loglogistic function!
 
 ClarkLDF <- function(Triangle,
         cumulative = TRUE,
@@ -63,7 +64,7 @@ ClarkLDF <- function(Triangle,
     if (ncol(Triangle) < 4L) stop("matrix must have at least 4 columns")
 
     dev <- as.numeric(colnames(Triangle))
-    if (any(is.na(dev))) stop("non-'age' column name(s)")
+    if (length(dev)<1 | any(is.na(dev))) stop("non-'age' column name(s)")
     if (any(dev[-1L]<=head(dev, -1L))) stop("ages must be strictly increasing")
     if (tail(dev, 1L) > maxage[1L]) stop("'maxage' must not be less than last age in triangle")
     
@@ -126,7 +127,7 @@ ClarkLDF <- function(Triangle,
         else 
         if (cumulative) predict(chainladder(Triangle))[,ncol(Triangle)] 
         else predict(chainladder(incr2cum(Triangle)))[,ncol(Triangle)]
-    magscale <- max(Uinit)
+    workarea$magscale <- magscale <- max(Uinit)
     Triangle <- Triangle / magscale
     CurrentValue <- CurrentValue / magscale
     Uinit <- Uinit / magscale
@@ -153,7 +154,7 @@ ClarkLDF <- function(Triangle,
     
     # "prime" 'workarea' with initial data
     workarea$origin   <- Table1.1$origin # origin year (index) of the observation
-    workarea$io <- outer(workarea$origin, 1:nr, `==`) # T/F flag: is obs in origin year=column #?
+    workarea$io <- outer(workarea$origin, 1:nr, `==`) # T/F flag: is obs in origin year=column
     workarea$value    <- as.numeric(Table1.1$value)
     workarea$Age.from <- Table1.1$Age.from
     workarea$Age.to   <- Table1.1$Age.to
@@ -164,6 +165,11 @@ ClarkLDF <- function(Triangle,
 
     # Calc starting values for the parameters, call optim
     theta <- c(structure(Uinit, names=origins), G@initialGuess(workarea))
+    
+    # optim returns the maximum (optimal) value of LL.ODP in the 
+    #   list value 'value'; call that value valopt.
+    # Any value of theta that gives a value of LL.ODP(theta) that is
+    #   less than valopt is a "suboptimal" solution.
     S <- optim(
         par = theta,
         LL.ODP, # function to be maximized (fmscale=-1)
@@ -198,8 +204,13 @@ ClarkLDF <- function(Triangle,
     K1 <- seq.int(K)
     U <- thetaU <- theta[K1]
     thetaG <- tail(theta, G@np)
-    if (any(G@LBFGSB.lower(workarea) == thetaG | G@LBFGSB.upper(workarea) == thetaG)) 
+    if (any(G@LBFGSB.lower(workarea) == thetaG | G@LBFGSB.upper(workarea) == thetaG)) {
+        prn(G@LBFGSB.lower(workarea))
+        prn(thetaG)
+        prn(G@LBFGSB.upper(workarea))
+        prn(thetaG)
         warning("Solution constrained at growth function boundary! Use results with caution!\n\n")
+        }
     
     # Calculate the SIGMA2 "scaling parameter"
     SIGMA2 <- workarea$SIGMA2 <- LL.ODP.SIGMA2(workarea)
@@ -355,6 +366,7 @@ ClarkLDF <- function(Triangle,
             MAXAGE = maxage,
             MAXAGE.USED = maxage.used,
             FutureValue = R.ldf.truncated * magscale,
+            UltimateValue = (CurrentValue + R.ldf.truncated) * magscale,
             ProcessSE = gammar * magscale,
             ParameterSE = deltar * magscale,
             StdError = totalr * magscale,
@@ -362,12 +374,13 @@ ClarkLDF <- function(Triangle,
                 Origin = "Total",
                 CurrentValue = CurrentValue.sum * magscale,
                 FutureValue = R.ldf.truncated.sum * magscale,
+                UltimateValue = (CurrentValue.sum + R.ldf.truncated.sum) * magscale,
                 ProcessSE = gammar.sum * magscale,
                 ParameterSE = deltar.sum * magscale,
                 StdError = totalr.sum * magscale
                 ),
             PAR = c(unclass(S$par)) * c(rep(magscale, K), rep(1, G@np)),
-            THETAU = thetaU,
+            THETAU = thetaU * magscale,
             THETAG = thetaG,
             GrowthFunction = g,
             GrowthFunctionMAXAGE = g.maxage,
@@ -428,7 +441,7 @@ ClarkCapeCod <- function(Triangle,
         }
 
     dev <- as.numeric(colnames(Triangle))
-    if (any(is.na(dev))) stop("non-'age' column name(s)")
+    if (length(dev)<1 | any(is.na(dev))) stop("non-'age' column name(s)")
     if (any(dev[-1L]<=head(dev, -1L))) stop("ages must be strictly increasing")
     if (tail(dev, 1L) > maxage[1L]) stop("'maxage' must not be less than last age in triangle")
     
@@ -513,7 +526,7 @@ ClarkCapeCod <- function(Triangle,
     
     # "prime" workarea with initial data
     workarea$origin   <- Table1.1$origin # origin year (index) of the observation
-    workarea$io <- outer(1:nr, workarea$origin, `==`) # T/F flag: is obs in origin year=column #?
+    workarea$io <- outer(workarea$origin, 1:nr, `==`) # not used for CC, but leave in anyway
     workarea$value    <- as.numeric(Table1.1$value)
     workarea$P        <- Table1.1$P
     workarea$Age.from <- Table1.1$Age.from
@@ -566,7 +579,7 @@ ClarkCapeCod <- function(Triangle,
     # AY DETAIL LEVEL
 
     # Expected value of reserves
-    R <- R.CapeCod(theta, Premium, G, CurrentAge.to, maxage)#, workarea)
+    R <- R.CapeCod(theta, Premium, G, CurrentAge.used, maxage.used)#, workarea)
     g <- G(CurrentAge.used, thetaG)
     g.maxage <- G(maxage.used, thetaG)
     ldf <- 1 / g
@@ -704,6 +717,7 @@ ClarkCapeCod <- function(Triangle,
             MAXAGE = maxage,
             MAXAGE.USED = maxage.used,
             FutureValue = R,
+            UltimateValue = CurrentValue + R,
             ProcessSE = gammar,
             ParameterSE = deltar,
             StdError = totalr,
@@ -712,6 +726,7 @@ ClarkCapeCod <- function(Triangle,
                 Premium = Premium.sum,
                 CurrentValue = CurrentValue.sum,
                 FutureValue = R.sum,
+                UltimateValue = CurrentValue.sum + R.sum,
                 ProcessSE = gammar.sum,
                 ParameterSE = deltar.sum,
                 StdError = totalr.sum
@@ -742,56 +757,67 @@ ClarkCapeCod <- function(Triangle,
     }
 
 summary.ClarkLDF <- function(object, ...) {
+    origin <- c(object$Origin, object$Total$Origin)
     data.frame(
-        Origin = c(object$Origin, object$Total$Origin),
+        Origin = origin,
         CurrentValue = c(object$CurrentValue, object$Total$CurrentValue),
         Ldf = c(object$TruncatedLdf, NA),
-        UltimateValue = c(object$CurrentValue, object$Total$CurrentValue) + c(object$FutureValue, object$Total$FutureValue),
+        UltimateValue = c(object$UltimateValue, object$Total$UltimateValue),
         FutureValue = c(object$FutureValue, object$Total$FutureValue),
         StdError = c(object$StdError, object$Total$StdError),
-        c(object$StdError, object$Total$StdError) / c(object$FutureValue, object$Total$FutureValue),
+        CV = c(object$StdError, object$Total$StdError) / c(object$FutureValue, object$Total$FutureValue),
+        row.names = origin,
         stringsAsFactors = FALSE
         )
     }
 
-print.ClarkLDF <- function(x, Amountdigits=0, LDFdigits=3, CVdigits=3, ...) {
+print.ClarkLDF <- function(x, Amountdigits=0, LDFdigits=3, CVdigits=3, row.names=FALSE, ...) {
     y <- summary(x)
-    print(cbind(format(y[1]), 
-                format(round(y[2], Amountdigits), big.mark=","), 
-                Ldf = c(head(format(round(y[[3]], LDFdigits)), -1), ""), 
-                format(round(y[4:6], Amountdigits), big.mark=","), 
-                `CV%` = formatC(100*round(y[[7]], CVdigits), format="f", digits=CVdigits-2)
-                ),
-          row.names = FALSE, 
-          ...)
+    z <- structure(data.frame(y[1], 
+        format(round(y[[2]], Amountdigits), big.mark=","),
+        Ldf = c(head(format(round(y[[3]], LDFdigits)), -1), ""), 
+        format(round(y[[4]], Amountdigits), big.mark=","), 
+        format(round(y[[5]], Amountdigits), big.mark=","), 
+        format(round(y[[6]], Amountdigits), big.mark=","), 
+        formatC(100*round(y[[7]], CVdigits), format="f", digits=CVdigits-2),
+        stringsAsFactors = FALSE),
+        names = c(names(y)[1:6], "CV%")
+        )
+    print(z, row.names = row.names, ...)
     }
 
 summary.ClarkCapeCod <- function(object, ...) {
+    origin <- c(object$Origin, object$Total$Origin)
     data.frame(
-        Origin = c(object$Origin, object$Total$Origin),
+        Origin = origin,
         CurrentValue = c(object$CurrentValue, object$Total$CurrentValue),
         Premium = c(object$Premium, object$Total$Premium),
         ELR = c(rep(object$ELR, length(object$Premium)), NA),
         FutureGrowthFactor = c(object$FutureGrowthFactor, NA),
         FutureValue = c(object$FutureValue, object$Total$FutureValue),
-        UltimateValue = c(object$CurrentValue, object$Total$CurrentValue) + c(object$FutureValue, object$Total$FutureValue),
+        UltimateValue = c(object$UltimateValue, object$Total$UltimateValue),
         StdError = c(object$StdError, object$Total$StdError),
         CV = c(object$StdError, object$Total$StdError) / c(object$FutureValue, object$Total$FutureValue),
+        row.names = origin,
         stringsAsFactors = FALSE
         )
     }
 
-print.ClarkCapeCod <- function(x, Amountdigits=0, ELRdigits=3, Gdigits=3, CVdigits=3, ...) {
+print.ClarkCapeCod <- function(x, Amountdigits=0, ELRdigits=3, Gdigits=4, CVdigits=3, row.names=FALSE, ...) {
     y <- summary(x)
-    print(cbind(format(y[1]), 
-                format(round(y[2:3], Amountdigits), big.mark=",", scientific=FALSE), 
-                ELR = c(head(formatC(round(y[[4]], ELRdigits), digits=ELRdigits, format="f"), -1), ""), 
-                FutureGrowthFactor = c(head(formatC(round(y[[5]],   Gdigits), digits=  Gdigits, format="f"), -1), ""), 
-                format(round(y[6:8], Amountdigits), big.mark=","), 
-                `CV%` = formatC(100*round(y[[9]], CVdigits), format="f", digits=CVdigits-2)
-                ),
-          row.names = FALSE, 
-          ...)
+    z <- structure(data.frame(y[1], 
+        format(round(y[[2]], Amountdigits), big.mark=",", scientific=FALSE), 
+        format(round(y[[3]], Amountdigits), big.mark=",", scientific=FALSE), 
+        c(head(formatC(round(y[[4]], ELRdigits), digits=ELRdigits, format="f"), -1), ""), 
+        c(head(formatC(round(y[[5]],   Gdigits), digits=  Gdigits, format="f"), -1), ""), 
+        format(round(y[[6]], Amountdigits), big.mark=","), 
+        format(round(y[[7]], Amountdigits), big.mark=","), 
+        format(round(y[[8]], Amountdigits), big.mark=","), 
+        formatC(100*round(y[[9]], CVdigits), format="f", digits=CVdigits-2),
+        stringsAsFactors = FALSE),
+        names = c(names(y)[1:8], "CV%")
+        )
+    print(z, row.names = FALSE, ...)
     }
 
 plot.clark <- function(x, ...) {
@@ -984,11 +1010,7 @@ setClass("GrowthFunction",
 
 G.loglogistic <- function(x, theta) {
     if (any(theta <= 0)) return(rep(0, length(x)))
-    om <- unname(theta[1L])
-    th <- unname(theta[2L])
-    y <- 1/(1+(th/x)^om)
-    y[is.na(y)] <- 0
-    y
+    pllogis(x, shape = theta[1], scale = theta[2])
     }
 
 dG.loglogisticdtheta <- function(x, theta) {
@@ -996,53 +1018,39 @@ dG.loglogisticdtheta <- function(x, theta) {
         if (length(x) > 1L) array(0, dim = c(2L, length(x)))
         else numeric(2L)
         )
-    om <- theta[1L]
-    th <- theta[2L]
-    thx <- th/x
-    y <- 1/(1+(thx)^om)
-    xth <- 1/thx
-    dydom <- y / (xth^om + 1) * log(xth)
-    tom <- th^om
-    dydth <- y * tom / (x^om + tom) * (-om / th)
-    # Sandwich columns together.
-    dtheta <- cbind(dydom, dydth)
-    # If x <= 0, Inf, derivative = 0 by definition  (log returns NA)
-    dtheta[is.na(dtheta)] <- 0
-    dtheta
+    y <- pllogis(x, shape = theta[1], scale = theta[2])
+    y1y <- y * (1-y)
+    logxtheta <- log(x/theta[2])
+    dy <- structure(
+        cbind(
+            y1y * logxtheta,
+            -y1y * theta[1] / theta[2]
+            ),
+        dimnames = list(names(x), names(theta))
+        )
+    dy[is.na(dy)] <- 0
+    dy
     }
 
 d2G.loglogisticdtheta2 <- function(x, theta) {
     if (any(theta <= 0)) return(
         array(0, dim = if (length(x) > 1L) c(length(x), 4L) else c(2L, 2L))
         )
-    om <- theta[1L]
-    th <- theta[2L]
-    thx <- th/x
-    y <- 1/(1+(thx)^om)
-    tom <- th^om
-    xth <- 1/thx
-
-    dydom <- y / (xth^om + 1) * log(xth)
-    dydth <- y * tom / (x^om + tom) * (-om / th)
-
-    d2ydom2 <- dydom * log(xth) * (1 - 2 * y)
-    d2ydth2 <- -dydth / th * (1 + om * (1 - 2 * y))
-    d2ydomdth <- 1/om * dydth * (1 + om * log(xth) * (1 - 2*y))
-
-    ndx <- x<=0 | is.infinite(x)
-    d2ydom2[ndx] <- 0
-    d2ydth2[ndx] <- 0
-    d2ydomdth[ndx] <- 0
-    
-    if (length(x)>1L)
-        # Create a matrix where each column holds an observation's
-        #   d2 matrix "stretched out" into a vector of length 4
-        cbind(d2ydom2, d2ydomdth, d2ydomdth, d2ydth2)
-    else array(
-        c(d2ydom2, d2ydomdth, d2ydomdth, d2ydth2),
-        dim = c(2L, 2L),
-        dimnames=list(names(theta), names(theta))
-        )
+    y <- pllogis(x, shape = theta[1], scale = theta[2])
+    y1y <- y * (1-y)
+    oneMinus2y <- 1 - 2 * y
+    logxtheta <- log(x/theta[2])
+    dyomega <- y1y * logxtheta
+    A <- dyomega * logxtheta * oneMinus2y
+    B <- -y1y / theta[2] * (1 + theta[1] * logxtheta * oneMinus2y)
+    C <- y1y * theta[1] / theta[2]^2 * (1 + theta[1] * oneMinus2y)
+    d2y <- if (length(x)>1L) structure(cbind(A, B, B, C), dimnames = list(
+                names(x),
+                outer(names(theta), names(theta), paste, sep=":")))
+           else array(c(A, B, B, C), dim = c(2L, 2L), dimnames = list(
+                names(theta), names(theta)))
+    d2y[is.na(d2y)] <- 0
+    d2y
     }
 
 loglogistic <- new("GrowthFunction", 
@@ -1054,7 +1062,7 @@ loglogistic <- new("GrowthFunction",
         theta = median(env$Age.to, na.rm=TRUE)
         ),
     LBFGSB.lower = function(env) c(
-        omega = .1,
+        omega = .01,
         theta = min(c(.5, env$Age.to))
         ),
     LBFGSB.upper = function(env) c(
@@ -1140,8 +1148,8 @@ weibull <- new("GrowthFunction",
         theta = max(env$Age.to, na.rm=TRUE) * (log(1/.05))^(-1/om) # 95% developed at current max age
         ),
     LBFGSB.lower = function(env) c(
-        omega = .1,
-        theta = max(env$Age.to) / ((-log(.Machine$double.eps))^(1/2)) # 2 = omega upper
+        omega = .01,
+        theta = min(env$Age.to) / ((-log(.Machine$double.eps))^(1/2)) # 2 = omega upper
         ),
     LBFGSB.upper = function(env) c(
         omega = 2,#8,
@@ -1156,7 +1164,7 @@ weibull <- new("GrowthFunction",
 LL.ODP <- function(theta, MU, G, workarea) {
     # Calculate the expected value of all observations, store in workarea.
     MU(theta, G, workarea)
-    if (any(workarea$mu<=0)) { # usually due to growth function = 0 or 1
+    if (any(workarea$mu < 0)) { # should not happen if G's formed correctly
         #prn(theta)
         #prn(workarea$mu)
         msg <- c("Maximum likelihood search failure!\n",
@@ -1175,6 +1183,12 @@ LL.ODP <- function(theta, MU, G, workarea) {
                 )
         stop(msg)
         }
+    # It would not be unreasonable for a G to generate zero expected losses.
+    # Since log(0)=Inf but optim must have finite values to work with, set
+    #   mu to be a very small number. 
+    # Also, a faster way to test for zero would be on the unique ages
+    #   rather than on all the ages in workarea.
+    workarea$mu[workarea$mu < .Machine$double.eps] <- .Machine$double.eps
     # Do ODP-model calc for all observations, add them up.
     sum(workarea$value * log(workarea$mu) - workarea$mu)
     }
