@@ -7,13 +7,14 @@ export(Join2Fits, JoinFitMse, Mse, residCov, residCor)
 export(ClarkLDF, ClarkCapeCod)
 export(Table64, Table65, Table68)
 export(ata)
+export(glmReserve)
 
 importFrom(stats, quantile, predict, coef, vcov,
               residuals, resid, fitted, fitted.values, rstandard)
 importFrom(methods, show, coerce, cbind2, rbind2 )
 importFrom(graphics, plot)
 importFrom(Matrix, summary)
-
+importFrom(utils, packageDescription)
 #Classes
 exportClasses(triangles, MultiChainLadder, MultiChainLadderFit,
               MCLFit, GMCLFit, MultiChainLadderMse, MultiChainLadderSummary,

@@ -11,6 +11,9 @@ incr2cum <- function(Triangle, na.rm=FALSE){
     }
     cum <- t(apply(Triangle,1, cumsum))
     dimnames(cum) <- dimnames(Triangle)
+    expos <- attr(Triangle,"exposure")
+    if (!is.null(expos))
+      attr(cum,"exposure") <- expos
     class(cum) <- c("triangle", "matrix")
     cum
 }
@@ -19,6 +22,9 @@ incr2cum <- function(Triangle, na.rm=FALSE){
 cum2incr <- function(Triangle){
     incr <- cbind(Triangle[,1], t(apply(Triangle,1,diff)))
     dimnames(incr) <- dimnames(Triangle)
+    expos <- attr(Triangle,"exposure")
+    if (!is.null(expos))
+      attr(incr,"exposure") <- expos    
     class(incr) <- c("triangle", "matrix")
     incr
 }
@@ -69,16 +75,16 @@ as.data.frame.triangle <- function(x, row.names=NULL, optional, lob=NULL, na.rm=
     return(longTriangle)
 }
 
-plot.triangle <- function(x,type="b",xlab="dev. period",ylab=NULL, lattice=FALSE,...){
+plot.triangle <- function(x,t="b",xlab="dev. period",ylab=NULL, lattice=FALSE,...){
     .x <- x
     class(.x) <- "matrix"
     if(!lattice){
-        matplot(t(.x),type=type,
+        matplot(t(.x),t=t,
                 xlab=xlab,
                 ylab=ifelse(is.null(ylab), deparse(substitute(x)), ylab),...)
     }else{
         df <- as.data.frame(as.triangle(.x))
-        xyplot(value ~ dev | factor(origin), data=df, type="l", as.table=TRUE,...)
+        xyplot(value ~ dev | factor(origin), data=df, t="l", as.table=TRUE,...)
     }
 }
 
