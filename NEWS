@@ -1,3 +1,21 @@
+Version 0.1.5-1
+================
+Changes
+
+   o Internal changes to plot.MackChainLadder to pass new checks
+     introduced by R 2.14.0.
+   o Commented out unnecessary creation of 'io' matrix in ClarkCapeCod
+     function. Allows for analysis of very large matrices for CapeCod
+     without running out of RAM. 'io' matrix is an integral part of
+     ClarkLDF, and so remains in that function.
+   o plot.clark method
+      - Removed "conclusion" stated in QQplot of clark methods.
+      - Restore 'par' settings upon exit
+      - Slight change to the title
+   o Reduced the minimum 'theta' boundary for weibull growth function
+   o Added warnings to as.triangle if origin dev. period are not numeric
+   
+
 Version 0.1.5-0
 ================
 NEW FEATURES
