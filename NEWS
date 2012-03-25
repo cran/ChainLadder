@@ -1,3 +1,22 @@
+Version 0.1.5-2
+================
+NEW FEATURES
+
+   o Started writing a vignette. The current version is still draft
+     and far from complete. Feedback will be much appreciated.
+
+Changes
+
+   o Removed .Internal call to make ChainLadder compliant with R 2.15.0 
+   o Changed argument "t" in plot.triangle to "type" in order to be
+     consistent with plot.default
+
+Bug Fixes
+   o as.triangle() gave triangles back, with development periods not 
+   	 ordered, when the input data frame had unordered development 
+   	 periods in different units, e.g. dev=c(1,100,10)
+     Thanks to Ben Escoto for reporting this issue.
+
 Version 0.1.5-1
 ================
 Changes

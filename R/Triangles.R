@@ -41,11 +41,11 @@ as.triangle.matrix <- function(Triangle, origin="origin", dev="dev", value="valu
  }
  names(dimnames(Triangle)) <- c(origin, dev)
 
- if(is.null(dimnames(Triangle)$origin)){
-     dimnames(Triangle)$origin <- 1:nrow(Triangle)
+ if(is.null(dimnames(Triangle)[[origin]])){
+     dimnames(Triangle)[[origin]] <- 1:nrow(Triangle)
  }
- if(is.null(dimnames(Triangle)$dev)){
-     dimnames(Triangle)$dev <- 1:col(Triangle)
+ if(is.null(dimnames(Triangle)[[dev]])){
+     dimnames(Triangle)[[dev]] <- 1:ncol(Triangle)
  }
 
 
@@ -75,16 +75,16 @@ as.data.frame.triangle <- function(x, row.names=NULL, optional, lob=NULL, na.rm=
     return(longTriangle)
 }
 
-plot.triangle <- function(x,t="b",xlab="dev. period",ylab=NULL, lattice=FALSE,...){
+plot.triangle <- function(x,type="b",xlab="dev. period",ylab=NULL, lattice=FALSE,...){
     .x <- x
     class(.x) <- "matrix"
     if(!lattice){
-        matplot(t(.x),type=t,
+        matplot(t(.x),type=type,
                 xlab=xlab,
                 ylab=ifelse(is.null(ylab), deparse(substitute(x)), ylab),...)
     }else{
         df <- as.data.frame(as.triangle(.x))
-        xyplot(value ~ dev | factor(origin), data=df, t="l", as.table=TRUE,...)
+        xyplot(value ~ dev | factor(origin), data=df, type=type, as.table=TRUE,...)
     }
 }
 
@@ -96,22 +96,23 @@ print.triangle <- function(x, ...) {
 .as.MatrixTriangle <- function(x, origin="origin", dev="dev", value="value"){
     ## x has to be a data.frame with columns: origin, dev and value
     x <- x[,c(origin, dev, value)]
-    x <- x[order(x[origin], x[dev]),]
     names(x) <- c("origin", "dev", "value")
-    .names <- apply(x[,c("origin", "dev", "value")], 2, unique)
-    if(class(.names) != "list"){
-        .names <- as.list(as.data.frame(.names))
-    }
-    .namesOD <- .names[c("origin", "dev")]
-    ## Expand to include entire array, in case don't have complete data
-    .id <- paste(x$origin, x$dev,  sep='.')
-    .grid <- expand.grid(.namesOD)
-    .grid$id <- paste(.grid$origin, .grid$dev, sep='.')
-    .grid$data <- x$value[match(.grid$id, .id)]
-    ## Create data array
-    .data <- array(.grid$data, dim=unlist(lapply(.namesOD, length)),
-                   dimnames=.namesOD)
-    return(.data)
+    
+    z <- reshape(x, timevar="dev", v.names="value", idvar="origin", direction="wide")
+    
+    z <- z[order(z$origin), ]
+    
+    .origin.names <- z$origin
+     z <- z[,-1]
+    
+    names(z) <- gsub("value.", "",names(z))
+	.dev.names <- as.numeric(as.character(names(z)))	
+    z <- z[,order(.dev.names)]
+    
+    z<- as.matrix(z)
+    dimnames(z) <- list(origin=.origin.names, dev=sort(.dev.names))
+
+	return(z)
 }
 
 .as.LongTriangle <- function(Triangle, na.rm=FALSE){
