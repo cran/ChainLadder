@@ -58,7 +58,10 @@ as.triangle.data.frame <- function(Triangle, origin="origin", dev="dev", value="
         matrixTriangle <- as.matrix(Triangle)
         matrixTriangle <- as.triangle(matrixTriangle)
     }else{
-        matrixTriangle <- .as.MatrixTriangle(Triangle, origin, dev, value)
+        fmla <- as.formula(paste(origin, "~", dev))
+        matrixTriangle <- acast(Triangle, fmla, fun.aggregate = sum, value.var = value, fill = as.numeric(NA))
+        names(dimnames(matrixTriangle)) <- c(origin, dev)
+#        matrixTriangle <- .as.MatrixTriangle(Triangle, origin, dev, value)
     }
     class(matrixTriangle) <- c("triangle", "matrix")
     return(matrixTriangle)
@@ -112,6 +115,7 @@ print.triangle <- function(x, ...) {
     z<- as.matrix(z)
     dimnames(z) <- list(origin=.origin.names, dev=sort(.dev.names))
 
+  names(dimnames(z)) <- c(origin, dev)
 	return(z)
 }
 

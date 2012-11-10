@@ -57,8 +57,8 @@
   \tabular{ll}{
     Package: \tab ChainLadder\cr
     Type: \tab Package\cr
-    Version: \tab 0.1.5-2\cr
-    Date: \tab 2012-03-25\cr
+    Version: \tab 0.1.5-4\cr
+    Date: \tab 2012-11-10\cr
     License: \tab GPL version 2 or later\cr
   }
 }
@@ -80,6 +80,11 @@
   
   \cite{Clark, David R., "LDF Curve-Fitting and Stochastic Reserving: A Maximum Likelihood Approach," \emph{CAS Forum}, Fall 2003.}
   
+\cite{Zhang Y. A general multivariate chain ladder model.\emph{Insurance: Mathematics and Economics}, 46, pp. 588:599, 2010.}
+
+\cite{ Zhang, Y. Likelihood-based and Bayesian Methods for Tweedie Compound Poisson Linear Mixed Models, \emph{Statistics and Computing}, forthcoming. 
+\url{http://www.actuaryzhang.com/publication/MixedTweedie.pdf}}
+
 }
 
 \examples{
