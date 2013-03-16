@@ -107,7 +107,6 @@ Also, we recommend the use of \code{MultiChainLadder2} over \code{MultiChainLadd
 }
 
 \examples{
-
 # This shows that the MCL model using "OLS" is equivalent to 
 # the MackChainLadder when applied to one triangle 
 
@@ -118,7 +117,7 @@ data(GenIns)
 # show plots 
 parold <- par(mfrow = c(2, 2))
 plot(U2, which.plot = 1:4)
-plot(U1, which.plot = 5)
+plot(U2, which.plot = 5)
 par(parold)
 
 
@@ -133,6 +132,7 @@ par(parold)
 (W1 <- MultiChainLadder2(liab, mse.method = "Independence", 
     		control = systemfit.control(methodResidCov = "Theil"))) 
 
+\dontrun{
 # use the iterative residual covariance estimator
 for (i in 1:5){
   W2 <- MultiChainLadder2(liab, mse.method = "Independence", 
@@ -157,6 +157,7 @@ par(parold)
 ## summary statistics
 summary(f1, portfolio = "1+3")@report.summary[[4]]
 
+
 # model for joint development of paid and incurred triangles 
 da <- auto[1:2]
 # MCL with diagonal development
@@ -174,6 +175,9 @@ names(r1) <- c("MCL", "GMCL")
 r2 <- summary(M2)[[1]][, 6]
 r2 <- c(r2, summary(M2)[[2]][2, 3])
 print(do.call(cbind, c(r1, list(MuCl = r2))) * 100, digits = 4)
+
+}
+
 # To reproduce results in Zhang (2010) and see more examples, use:
 \dontrun{
  demo(MultiChainLadder)
