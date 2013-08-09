@@ -1,3 +1,31 @@
+Version 0.1.6 [2013-08-09]
+--------------------------
+
+NEW FEATURES
+
+  o A new function, CLFMdelta, finds the value of 
+    delta such that the model coefficients resulting from 
+    the 'chainladder' function with that value for argument delta are 
+    consistent with an input vector of 'selected' age-to-age factors,
+    subject to restrictions on the 'selected' factors relative to
+    the input 'Triangle'. See the paper 
+    "A Family of Chain-Ladder Factor Models for Selected Link Ratios"
+    by Bardis, Majidi, Murphy:
+    http://www.variancejournal.org/issues/?fa=article&abstrID=6943
+  
+  o A new 'coef' method returns the age-to-age factor coefficients of 
+    the regression models estimated by the 'chainladder' function.
+    
+  o Exports a function "LRfunction" that calculates a Triangle's 
+    link ratio function and can be used to plot the space of 
+    "reasonable link ratio selections" per the CLFM paper.
+    
+Changes
+
+   o Removed some package dependencies in DESCRIPTION and moved them 
+     to Imports.
+
+
 Version 0.1.5-6 [2013-03-16]
 ----------------------------
 
@@ -12,6 +40,7 @@ NEW FEATURES
     the three-term formula found in Murphy's 1994 paper and in the 
     2006 paper by Buchwalder, Buhlmann, Merz, and Wuthrich.
   o A few more Mack Method examples.
+
 
 Version 0.1.5-5 [2013-02-13]
 ----------------------------
