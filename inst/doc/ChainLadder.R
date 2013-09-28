@@ -543,7 +543,7 @@ summary(fit1, type = "model")
 # Gamma GLM
 (fit2 <- glmReserve(GenIns, var.power = 2))
 # compound Poisson GLM (variance function estimated from the data):
-(fit3 <- glmReserve(GenIns, var.power = NULL))
+#(fit3 <- glmReserve(GenIns, var.power = NULL))
 
 
 ###################################################
