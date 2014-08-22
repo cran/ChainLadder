@@ -431,7 +431,7 @@ plot.MackChainLadder <- function(x, mfrow=c(3,2), title=NULL,lattice=FALSE,...){
                       names.arg=rownames(.myResult),
                       main="Mack Chain Ladder Results",
                       xlab="Origin period",
-                      ylab="Value",#paste(Currency,myUnit),
+                      ylab="Amount",#paste(Currency,myUnit),
                       ylim=c(0, max(apply(.myResult[c("Ultimate", "Mack.S.E")],1,sum),na.rm=TRUE)))
         
       }else{
@@ -441,7 +441,7 @@ plot.MackChainLadder <- function(x, mfrow=c(3,2), title=NULL,lattice=FALSE,...){
                       names.arg=rownames(.myResult),
                       main="Mack Chain Ladder Results",
                       xlab="Origin period",
-                      ylab="Value",#paste(Currency,myUnit),
+                      ylab="Amount",#paste(Currency,myUnit),
                       ylim=c(0, max(apply(.myResult[c("Ultimate", "Mack.S.E")],1,sum),na.rm=TRUE)))
       }
       ## add error ticks
@@ -454,8 +454,7 @@ plot.MackChainLadder <- function(x, mfrow=c(3,2), title=NULL,lattice=FALSE,...){
       
       matplot(t(.FullTriangle), type="l",
               main="Chain ladder developments by origin period",
-              xlab="Development period",
-              ylab="Amount", #paste(Currency, myUnit)
+              xlab="Development period", ylab="Amount", #paste(Currency, myUnit)
               )
       matplot(t(.Triangle), add=TRUE)
       

@@ -53,16 +53,16 @@ as.triangle.matrix <- function(Triangle, origin="origin", dev="dev", value="valu
 }
 
 as.triangle.data.frame <- function(Triangle, origin="origin", dev="dev", value="value", ...){
-    d <- dim(Triangle)
-    if(length(d) == 2 & d[1]==d[2]){
-        matrixTriangle <- as.matrix(Triangle)
-        matrixTriangle <- as.triangle(matrixTriangle)
-    }else{
+  #  d <- dim(Triangle)
+  #  if(length(d) == 2 & d[1]==d[2]){
+  #      matrixTriangle <- as.matrix(Triangle)
+  #      matrixTriangle <- as.triangle(matrixTriangle)
+  #  }else{
         fmla <- as.formula(paste(origin, "~", dev))
         matrixTriangle <- acast(Triangle, fmla, fun.aggregate = sum, value.var = value, fill = as.numeric(NA))
         names(dimnames(matrixTriangle)) <- c(origin, dev)
-#        matrixTriangle <- .as.MatrixTriangle(Triangle, origin, dev, value)
-    }
+  #      matrixTriangle <- .as.MatrixTriangle(Triangle, origin, dev, value)
+  #  }
     class(matrixTriangle) <- c("triangle", "matrix")
     return(matrixTriangle)
 }
@@ -78,7 +78,9 @@ as.data.frame.triangle <- function(x, row.names=NULL, optional, lob=NULL, na.rm=
     return(longTriangle)
 }
 
-plot.triangle <- function(x,type="b",xlab="dev. period",ylab=NULL, lattice=FALSE,...){
+plot.triangle <- function(x,type="b",
+                          xlab="dev. period",
+                          ylab=NULL, lattice=FALSE,...){
     .x <- x
     class(.x) <- "matrix"
     if(!lattice){
@@ -87,7 +89,8 @@ plot.triangle <- function(x,type="b",xlab="dev. period",ylab=NULL, lattice=FALSE
                 ylab=ifelse(is.null(ylab), deparse(substitute(x)), ylab),...)
     }else{
         df <- as.data.frame(as.triangle(.x))
-        xyplot(value ~ dev | factor(origin), data=df, type=type, as.table=TRUE,...)
+        xyplot(value ~ dev | factor(origin), data=df, type=type, 
+               as.table=TRUE, xlab=xlab, ylab=ylab, ...)
     }
 }
 

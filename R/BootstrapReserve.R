@@ -423,7 +423,7 @@ randomClaims <- function(exp.clms, resids, n.sims){
 }
 
 # Mike Lonergan mel at mcs.st-and.ac.uk
-# Fri Jun 14 19:31:24 CEST 2002
+# Fri Jun 14 19:31:24 CEST 2002 https://stat.ethz.ch/pipermail/r-help/2002-June/022425.html
 # functions to generate random numbers following
 # over-dispersed Poisson and negative binomial distributions
 # based on simple cheat of using a standard negative binomial,
@@ -431,7 +431,7 @@ randomClaims <- function(exp.clms, resids, n.sims){
 # ratio at the given value of the mean.
 
 rpois.od<-function (n, lambda,d=1) {
-    if (d==1)
+    if (d==1 | lambda<=0)
        rpois(n, lambda)
     else
        rnbinom(n, size=(lambda/(d-1)), mu=lambda)
