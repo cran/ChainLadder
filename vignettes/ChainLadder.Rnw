@@ -1263,8 +1263,10 @@ context of actuarial work:
 \item  Introduction to R for Actuaries~\cite{DeSilva2006}.
   
 \item An Actuarial Toolkit~\cite{MaynardDeSilvaHollowayGesmannLauHarnett2006}.  
-  
-\item The book \emph{Modern Actuarial Risk Theory -- Using R}~\cite{KaassGoovaertsDhaeneDenuit2001}
+
+\item \emph{Computational Actuarial Science with R}~\cite{gesmann2014claims}
+
+\item \emph{Modern Actuarial Risk Theory -- Using R}~\cite{KaassGoovaertsDhaeneDenuit2001}
 
 \item Actuar package vignettes: \url{http://cran.r-project.org/web/packages/actuar/index.html}
 

@@ -1,6 +1,6 @@
-438826e67dd4ce88e3812772d95bdf49 *DESCRIPTION
+9a5f9c06ea91a9cd4d844d1809aec1e6 *DESCRIPTION
 bf992a61fd5513dec06d3b4bfdea6ce9 *NAMESPACE
-c1b7ffcb6ca77ea47964dec7ad6ea44c *NEWS
+5ae6480ff4dd35bad50c66c6ff87584c *NEWS
 0f8f08d45e4db5dd2c9c7b9b922aee12 *R/BootstrapReserve.R
 a42e194b863a3e89c999792065472d3d *R/CLFMdelta.r
 966f10267d306f4a9f553a5a55c433c6 *R/ChainLadder.R
@@ -13,9 +13,9 @@ d88e49a94e81d45164655b8f68ebe5a4 *R/clark.r
 95a1af1163a09c9455e8bed379a9b0ed *R/getLatestCumulative.r
 50117cb8205165b7334514441226e799 *R/glmReserve.R
 14b56719a4350c1e002a657599e84d6b *R/zzz.R
-a00017ab90736eee8b2367d68344d41a *README.md
+9233fde3ce19f56fd903f5da63865353 *README.md
 4f2421ae16deba2af5e4ffd06fcf69d0 *THANKS
-4fea633e984de2bf63ed4512ae502a40 *build/vignette.rds
+babd7332228e41c4a73dc81389d99c4b *build/vignette.rds
 01cae939bf7f4a2d316aa39e3d38805f *data/ABC.RData
 60210db9a6f9a3410a2a5f291e7d0d8b *data/GenIns.RData
 c77cf28e20554c51179fe243ac06ef88 *data/GenInsLong.RData
@@ -46,8 +46,8 @@ cca1c67278f40578568c59f89e75ba26 *inst/Images/MackLattice.png
 e4108981e775c4731a2bdfcbe66e6e79 *inst/Images/MunichChainLadder_MCLpaid_MCLincurred.png
 b3bbfb7b530b876827b24fa9d2076856 *inst/SWord/ChainLadder_SWord_Example.doc
 006e59fe3d3ca4cb9908cd7d44f623cb *inst/doc/ChainLadder.R
-4f90fc682895733f7e82d35117689eb7 *inst/doc/ChainLadder.Rnw
-ff514d97a3b444ba0d75c917f13bb08b *inst/doc/ChainLadder.pdf
+a078cf5b578fcd2bd22d0619e10d9f19 *inst/doc/ChainLadder.Rnw
+facdbda2a54c90f394e6e5fad2cb438e *inst/doc/ChainLadder.pdf
 5c3dfb725419e0a329faea48ef140d03 *inst/unitTests/runTests.R
 ccbaa7be393a02489dcf2ea6171eacf9 *inst/unitTests/runit.CLFMdelta.r
 5e12d72d721634c9dba28a1f1a1e5808 *inst/unitTests/runit.ChainLadder.R
@@ -107,7 +107,7 @@ ee96b18930424fcee4022b116d3b22c8 *man/summary.clark.rd
 acae673c91aa899973c81a1a4674f1ba *man/utilityfunctions.Rd
 e16c54a0f3b0cbc5f91ad21d8c60f48b *man/vcov.clark.rd
 20fcb5c76fc7636f16f6b62a880da7a9 *tests/doRUnit.R
-4f90fc682895733f7e82d35117689eb7 *vignettes/ChainLadder.Rnw
-be623c143c38c166be7708a0cc23a74c *vignettes/ChainLadder.bib
+a078cf5b578fcd2bd22d0619e10d9f19 *vignettes/ChainLadder.Rnw
+33289d3b12d513543d87935acd4c3e55 *vignettes/ChainLadder.bib
 324abc73a4740f8688d6f9fcc70893f5 *vignettes/RandDatabases.pdf
 72d4dfafe48841af910e5fbc33892e91 *vignettes/ReservePlot.pdf
