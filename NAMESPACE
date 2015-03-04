@@ -1,20 +1,20 @@
 importFrom(methods, coerce, cbind2, rbind2 )
 importFrom(utils, packageDescription)
 importFrom(lattice, xyplot, barchart)
-#importFrom(cplm, cpglm)
-importFrom(Hmisc, errbar, prn)
-importFrom(statmod, tweedie)
+importFrom(Hmisc, errbar, prn, all.is.numeric)
 importFrom(actuar, pllogis)
-importFrom(tweedie, rtweedie)
 importFrom(reshape2, acast)
 import(systemfit)
 import(grid)
 import(MASS)
 import(stats)
+#importFrom(tweedie, tweedie.profile, rtweedie, dtweedie.series, dtweedie, tweedie.dev)
+#importFrom(statmod, tweedie)
+import(statmod)
+import(tweedie)
 importFrom(methods, show, coerce, cbind2, rbind2 )
 importFrom(graphics, plot)
 importMethodsFrom(Matrix, summary)
-
 
 export(MackChainLadder, MunichChainLadder, BootChainLadder,
        MultiChainLadder, MultiChainLadder2) 
@@ -74,6 +74,16 @@ S3method(mean, BootChainLadder)
 
 S3method(vcov, clark)
 
-exportMethods(predict, Mse, summary, show, coerce,
+exportMethods(predict, Mse, summary, show, coerce, 
               "[", "$", "[[", "[<-", names, coef, vcov, residCov, residCor,
               residuals, resid, rstandard, fitted, plot, cbind2, rbind2, dim )
+
+S3method(CDR, MackChainLadder)
+S3method(CDR, BootChainLadder)
+S3method(CDR, default)
+export(CDR)
+
+export(tweedieReserve)
+S3method(print, tweedieReserve)
+S3method(summary, tweedieReserve)
+
