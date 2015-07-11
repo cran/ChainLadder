@@ -1,10 +1,3 @@
-
-%% The vignette is build automatically with the package
-%% You can build the vignette also on its own. 
-%% I (Markus) use the devtools package by Hadley Wickham to do this:
-%% library(devtools)
-%% build_vignettes("~/Dropbox/chainladder")
-
 \documentclass{article}
 %% \usepackage[T1]{fontenc} 
 \usepackage[utf8]{inputenc}
@@ -19,7 +12,7 @@
 \hypersetup{
   colorlinks=true,
   pdftitle={ChainLadder: Claims reserving with R},%
-  pdfauthor={Alessandro Carrato, Markus Gesmann, Dan Murphy, Mario W\"{u}thrich, and Wayne Zhang}%
+  pdfauthor={Alessandro Carrato, Fabio Concina, Markus Gesmann, Dan Murphy, Mario W\"{u}thrich, and Wayne Zhang}%
 }
 
 %\VignetteIndexEntry{ChainLadder: Claims reserving with R}
@@ -48,6 +41,7 @@ lattice.options(default.theme = standard.theme(color = FALSE))
 \SweaveOpts{concordance=TRUE}
 
 \author{Alessandro Carrato, 
+  Fabio Concina,
   Markus Gesmann,
   Dan  Murphy,\\
   Mario W\"{u}thrich and
@@ -226,7 +220,7 @@ demo("demo name")
 @
 
 For more information and examples see the project web site:
-\url{http://code.google.com/p/chainladder/}
+\url{https://github.com/mages/ChainLadder}
 
 
 \subsection{Installation}
@@ -365,7 +359,52 @@ raa.cum[1,]
 
 \subsubsection{Importing triangles from external data sources}
 In most cases you want to analyse your own data, usually stored in
-data bases. R makes it easy to access data using SQL statements,
+data bases or spreadsheets. 
+
+\paragraph{Importing a triangle from a spreadsheet}
+
+There are many ways to import the data from a spreadsheet. 
+A quick and dirty solution is using a CSV-file.
+
+Open a new workbook and copy your triangle into cell A1, with the first column being the accident or origin period and the first row describing the development period or age. 
+
+Ensure the triangle has no formatting, such a commas to separate thousands, as
+those cells will be saved as characters. 
+
+\begin{figure}[!ht]
+  \centering
+\includegraphics{SpreadsheetTriangle.png}
+\caption{Screen shot of a triangle in a spreadsheet software.}
+\label{ExcelTriangle}
+\end{figure}
+
+Now open R and go through the following commands:
+<<eval=FALSE>>=
+myCSVfile <- "path/to/folder/with/triangle.csv"
+## Use the R command: 
+# myCSVfile <- file.choose() 
+## to select the file interactively
+tri <- read.csv(file=myCSVfile, header = FALSE) 
+## Use read.csv2 if semicolons are used as a separator likely  
+## to be the case if you are in continental Europe
+library(ChainLadder)
+## Convert to triangle
+tri <- as.triangle(as.matrix(tri))
+# Job done.
+@
+
+\paragraph{Copying and pasting from a spreadsheet}
+Small data sets can be transfered to R backwards and forwards
+via the clipboard under MS Windows.
+
+Select a data set in the spreadsheet and copy it into the clipboard, then go to
+R and type:
+<<eval=FALSE>>=
+tri <- read.table(file="clipboard", sep="\t", na.strings="")
+@ 
+
+\paragraph{Reading data from a data base}
+R makes it easy to access data using SQL statements,
 e.g. via an ODBC connection\footnote{See the
   \href{http://cran.r-project.org/package=RODBC}{\texttt{RODBC}}
   and \href{http://cran.r-project.org/package=DBI}{\texttt{DBI}}
@@ -432,25 +471,6 @@ potential data flow between R and data bases.
   \caption{Flow chart of data between R and data bases.}
   \label{fig:database}
 \end{figure}
-
-\subsubsection{Copying and pasting from MS Excel}
-Small data sets in Excel can be transfered to R backwards and forwards
-with via the clipboard under MS Windows.
-
-\paragraph{Copying from Excel to R}
-Select a data set in Excel and copy it into the clipboard, then go to
-R and type:
-<<eval=FALSE>>=
-x <- read.table(file="clipboard", sep="\t", na.strings="")
-@ 
-\paragraph{Copying from R to Excel}
-Suppose you would like to copy the \texttt{RAA} triangle into Excel,
-then the following statement would copy the data into the clipboard:
-<<eval=FALSE>>=
-write.table(RAA, file="clipboard", sep="\t", na="")
-@ 
-Now you can paste the content into Excel. Please note that you can't
-copy lists structures from R to Excel easily. 
 
 \section{Chain-ladder methods}
 
@@ -928,6 +948,7 @@ For example, the following fits the SUR method to the first part (the
 first 11 columns) using the unbiased residual covariance estimator in
 \cite{Merz;Wuthrich:2008}, and separate chain ladders for the rest: 
 <<>>=
+require(systemfit)
 W1 <- MultiChainLadder2(liab, mse.method = "Independence", 
       	control = systemfit.control(methodResidCov = "Theil"))
 lapply(summary(W1)$report.summary, "[", 15, )
@@ -1269,6 +1290,83 @@ print(gg)
 % the above code doesn't seem to be stable
 %\caption{The predictive distribution of loss reserves for each year based on bootstrapping. }
 %\end{figure}
+
+\section{Paid-incurred chain model}
+
+The Paid-incurred chain model was published by Merz and Wüthrich in 
+2010~\cite{MerzWuthrich:2010}. It combines claims payments and incurred losses information in a a mathematically rigorous and consistent way to get a unified ultimate loss prediction.
+
+\subsection{Model assumptions}
+
+The model assumptions for the Log-Normal PIC Model are the following:
+ \itemize{
+   \item Conditionally, given $\Theta = (\Phi_0,...,\Phi_I,
+   \Psi_0,...,\Psi_{I-1},\sigma_0,...,\sigma_{I-1},\tau_0,...,\tau_{I-1})$
+   we have
+   \itemize{
+     \item the random vector $(\xi_{0,0},...,\xi_{I,I},
+     \zeta_{0,0},...,\zeta_{I,I-1})$ has multivariate Gaussian distribution
+     with uncorrelated components given by
+     \begin{equation*}
+     \xi_{i,j} \sim N(\Phi_j,\sigma^2_j),
+     \end{equation*}
+     \begin{equation*}
+     \zeta_{k,l} \sim N(\Psi_l,\tau^2_l);
+     \end{equation*}
+     \item cumulative payments are given by the recursion
+     \begin{equation*}
+     P_{i,j} = P_{i,j-1} \exp(\xi_{i,j}),
+     \end{equation*}
+     with initial value $P_{i,0} = \exp (\xi_{i,0})$;
+     \item incurred losses $I_{i,j}$ are given by the backwards
+     recursion
+     \begin{equation*}
+     I_{i,j-1} = I_{i,j} \exp(-\zeta_{i,j-1}),
+     \end{equation*}
+     with initial value $I_{i,I}=P_{i,I}$.
+   }
+   \item The components of $\Theta$ are indipendent and 
+   $\sigma_j,\tau_j > 0$ for all j.
+  }
+  
+\subsection{Parameter estimation}
+
+Parameters $\Theta$ in the model are in general not known and need to be
+estimated from observations. They are estimated in a Bayesian framework.
+In the Bayesian PIC model they assume that the previous assumptions 
+hold true with deterministic $\sigma_0,...,\sigma_J$ and $\tau_0,...,\tau_{J-1}$ and
+\begin{equation*}
+\Phi_m \sim N(\phi_m,s^2_m),
+\end{equation*}
+\begin{equation*}
+\Psi_n \sim N(\psi_n,t^2_n).
+\end{equation*}
+This is not a full Bayesian approach but has the advantage to give
+analytical expressions for the posterior distributions and the prediction
+uncertainty.
+     
+The Paid-incurred Chain model is implemented in the \texttt{ChainLadder} package via the function \texttt{PaidIncurredChain}.
+As an example we apply the function to the USAA paid and incurred triangles:
+<<>>=
+library(ChainLadder)
+PIC <- PaidIncurredChain(USAApaid, USAAincurred)
+PIC
+@
+
+We can access the reserves by origin year via
+<<>>=
+PIC$Res.Origin
+@
+and the total reserve via
+<<>>=
+PIC$Res.Tot
+@
+
+\texttt{s.e.} is the square root of mean square error of prediction for the total ultimate loss.
+
+It's important to notice that the model is implemented in the special case of non-informative priors for $\Phi_m$ and $\Psi_n$; this means that we let $s^2_m \to \infty$ and $t^2_n \to \infty$.
+
+
 \section{One year claims development result}
 
 The stochastic claims reserving  methods
@@ -1307,8 +1405,7 @@ by the following conditional mean square error of prediction (MSEP)
 \right|{\cal D}_t \right].
 \end{equation*}
 The major difficulty in the evaluation of the conditional MSEP is 
-the quantification of
-parameter estimation uncertainty.
+the quantification of parameter estimation uncertainty.
 
 \subsection{CDR functions}
 The one year claims development result (CDR)
@@ -1323,6 +1420,13 @@ For example, to reproduce the results of~\cite{Merz;Wuthrich:2014} use:
 M <- MackChainLadder(MW2014, est.sigma="Mack")
 cdrM <- CDR(M)
 round(cdrM, 1)
+@
+
+To review the full claims development picture set the argument \texttt{dev="all"}:
+
+<<>>=
+cdrAll <- CDR(M,dev="all")
+round(cdrAll, 1)
 @
 
 See the help files to \texttt{CDR} and \texttt{tweedieReserve} for more details.

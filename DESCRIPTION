@@ -2,8 +2,8 @@ Package: ChainLadder
 Type: Package
 Title: Statistical Methods and Models for Claims Reserving in General
         Insurance
-Version: 0.2.0
-Date: 2015-03-04
+Version: 0.2.1
+Date: 2015-07-11
 Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              email = "markus.gesmann@googlemail.com"),
              person("Daniel", "Murphy", role = "aut", 
@@ -16,22 +16,24 @@ Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              person("Christophe", "Dutang", role="ctb"),
              person("Arnaud", "Lacoume", role="ctb"),               
              person("Arthur", "Charpentier", role = "ctb"),
-             person("Mario", "Wuthrich", role = "aut")
+             person("Mario", "Wuthrich", role = "aut"),
+             person("Fabio", "Concina", role="aut",
+             email="fabio.concina@gmail.com")
              )
 Description: Various statistical methods and models which are
     typically used for the estimation of outstanding claims reserves
     in general insurance, including those to estimate the claims
     development result as required under Solvency II.
-Imports: Matrix, actuar, Hmisc, methods, stats, reshape2, MASS,
-        lattice, grid, tweedie, utils
-Depends: systemfit, statmod
-Suggests: RUnit
+Imports: Matrix, actuar, methods, stats, reshape2, lattice, grid,
+        tweedie, utils, systemfit, statmod
+Suggests: RUnit, MASS
 License: GPL (>= 2)
-URL: http://code.google.com/p/chainladder/
+URL: https://github.com/mages/ChainLadder#chainladder
 BugReports: https://github.com/mages/ChainLadder/issues
 LazyLoad: yes
 LazyData: yes
-Packaged: 2015-03-04 07:01:09 UTC; Markus
+NeedsCompilation: no
+Packaged: 2015-07-11 06:37:45 UTC; Markus
 Author: Markus Gesmann [aut, cre],
   Daniel Murphy [aut],
   Wayne Zhang [aut],
@@ -40,8 +42,8 @@ Author: Markus Gesmann [aut, cre],
   Christophe Dutang [ctb],
   Arnaud Lacoume [ctb],
   Arthur Charpentier [ctb],
-  Mario Wuthrich [aut]
+  Mario Wuthrich [aut],
+  Fabio Concina [aut]
 Maintainer: Markus Gesmann <markus.gesmann@googlemail.com>
-NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2015-03-04 08:14:46
+Date/Publication: 2015-07-11 11:02:03

@@ -1,19 +1,20 @@
+import(stats)
+importFrom(statmod, tweedie)
+importFrom(tweedie, rtweedie)
+importFrom(systemfit, systemfit, systemfit.control)
 importFrom(methods, coerce, cbind2, rbind2 )
-importFrom(utils, packageDescription)
+importFrom(utils, packageDescription, head, setTxtProgressBar, 
+           tail, txtProgressBar)
 importFrom(lattice, xyplot, barchart)
-importFrom(Hmisc, errbar, prn, all.is.numeric)
 importFrom(actuar, pllogis)
 importFrom(reshape2, acast)
-import(systemfit)
-import(grid)
-import(MASS)
-import(stats)
-#importFrom(tweedie, tweedie.profile, rtweedie, dtweedie.series, dtweedie, tweedie.dev)
-#importFrom(statmod, tweedie)
-import(statmod)
-import(tweedie)
-importFrom(methods, show, coerce, cbind2, rbind2 )
-importFrom(graphics, plot)
+importFrom(methods, show, coerce, cbind2, rbind2,
+                    as, new, slot, slotNames)
+importFrom(graphics, plot, abline, barplot, boxplot, hist, legend, 
+           lines, matplot, mtext, par, points, rug, text,
+           axis, segments, strwidth)
+importFrom(grid, grid.layout, unit, frameGrob, placeGrob, 
+           linesGrob, gpar, textGrob)
 importMethodsFrom(Matrix, summary)
 
 export(MackChainLadder, MunichChainLadder, BootChainLadder,
@@ -87,3 +88,4 @@ export(tweedieReserve)
 S3method(print, tweedieReserve)
 S3method(summary, tweedieReserve)
 
+export(PaidIncurredChain)

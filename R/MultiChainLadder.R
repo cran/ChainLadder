@@ -1329,11 +1329,11 @@ setMethod("plot",
                       		ylim=c(0, 1.25*ymax),...)
 						
 			legend("topleft",c("Latest","Forecast"),
-						fill=gray.colors(2),
+						fill=c("#4D4D4D", "#E6E6E6"), #gray.colors(2),
 						inset=c(0.1,0.1),
 						cex=legend.cex)
 
-       		errbar(x=bp, 
+       		.errbar(x=bp, 
 				y=.myResult[[i]][-n,"Ultimate"],
                		yplus=(.myResult[[i]][-n,"Ultimate"]+ .myResult[[i]][-n,"S.E"]),
                		yminus=(.myResult[[i]][-n,"Ultimate"] - .myResult[[i]][-n,"S.E"]),
@@ -1359,7 +1359,7 @@ setMethod("plot",
 					 }
 				
 			matplot(t(.FullTriangles[[i]]), 
-					t="l",
+					type="l",
                 			main=main2,
                 			xlab="Development period",
                 			ylab="Amount",

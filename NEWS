@@ -1,3 +1,27 @@
+Version 0.2.1 [2015-07-11]
+--------------------------
+
+NEW FEATURES
+
+  o New function PaidIncurredChain by Fabio Concina, based on the
+    2010 Merz & Wuthrich paper Paid-incurred chain claims reserving method
+
+  o plot.MackChainLadder and plot.BootChainLadder gained new argument     
+    'which', allowing users to specify which sub-plot to display. 
+    Thanks to Christophe Dutang for this suggestion.
+  
+Changes
+  
+  o Updated NAMESPACE file to comply with new R CMD checks in R-3.3.0
+  
+  o Removed package dependencies on grDevices and Hmisc
+  
+  o Expanded package vignette with new paragraph on importing spreadsheet
+    data, a new section "Paid-Incurred Chain Model" and an added example for
+    a full claims development picture in the "One Year Claims Development
+    Result" section.
+
+
 Version 0.2.0 [2015-03-04]
 --------------------------
 
