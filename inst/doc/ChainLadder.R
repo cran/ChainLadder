@@ -598,7 +598,7 @@ print(format(round(res.q), big.mark = ","), quote = FALSE)
 
 
 ###################################################
-### code chunk number 74: ChainLadder.Rnw:1350-1353
+### code chunk number 74: ChainLadder.Rnw:1351-1354
 ###################################################
 library(ChainLadder)
 PIC <- PaidIncurredChain(USAApaid, USAAincurred)
@@ -606,19 +606,19 @@ PIC
 
 
 ###################################################
-### code chunk number 75: ChainLadder.Rnw:1357-1358
+### code chunk number 75: ChainLadder.Rnw:1358-1359
 ###################################################
 PIC$Res.Origin
 
 
 ###################################################
-### code chunk number 76: ChainLadder.Rnw:1361-1362
+### code chunk number 76: ChainLadder.Rnw:1362-1363
 ###################################################
 PIC$Res.Tot
 
 
 ###################################################
-### code chunk number 77: ChainLadder.Rnw:1419-1422
+### code chunk number 77: ChainLadder.Rnw:1420-1423
 ###################################################
 M <- MackChainLadder(MW2014, est.sigma="Mack")
 cdrM <- CDR(M)
@@ -626,7 +626,7 @@ round(cdrM, 1)
 
 
 ###################################################
-### code chunk number 78: ChainLadder.Rnw:1427-1429
+### code chunk number 78: ChainLadder.Rnw:1428-1430
 ###################################################
 cdrAll <- CDR(M,dev="all")
 round(cdrAll, 1)
@@ -651,19 +651,19 @@ round(cdrAll, 1)
 
 
 ###################################################
-### code chunk number 80: ChainLadder.Rnw:1525-1526 (eval = FALSE)
+### code chunk number 80: ChainLadder.Rnw:1526-1527 (eval = FALSE)
 ###################################################
 ## system.file("Excel", package="ChainLadder") 
 
 
 ###################################################
-### code chunk number 81: ChainLadder.Rnw:1534-1535 (eval = FALSE)
+### code chunk number 81: ChainLadder.Rnw:1535-1536 (eval = FALSE)
 ###################################################
 ## system.file("SWord", package="ChainLadder") 
 
 
 ###################################################
-### code chunk number 82: ChainLadder.Rnw:1540-1541 (eval = FALSE)
+### code chunk number 82: ChainLadder.Rnw:1541-1542 (eval = FALSE)
 ###################################################
 ## demo(package="ChainLadder")
 
