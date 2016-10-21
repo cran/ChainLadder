@@ -186,7 +186,7 @@ tail.model <- lm(log(f-1) ~ dev.period)
 abline(tail.model)
 co <- coef(tail.model)
 ## extrapolate another 100 dev. period
-tail <- exp(co[1] + c((n + 1):(n + 100)) * co[2]) + 1
+tail <- exp(co[1] + c(n:(n + 100)) * co[2]) + 1
 f.tail <- prod(tail)
 f.tail      
 

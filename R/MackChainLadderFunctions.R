@@ -30,9 +30,9 @@ MackChainLadder <- function(
     ## Create chain ladder models
     
     ## Mack uses alpha between 0 and 2 to distinguish
-    ## alpha = 0 ordinary regression with intercept 0
+    ## alpha = 0 straight averages
     ## alpha = 1 historical chain ladder age-to-age factors
-    ## alpha = 2 straight averages
+    ## alpha = 2 ordinary regression with intercept 0
     
     ## However, in Zehnwirth & Barnett they use the notation of delta, whereby delta = 2 - alpha
     ## the delta is than used in a linear modelling context.
@@ -126,7 +126,7 @@ MackChainLadder <- function(
 ## Calculation of the mean squared error and standard error
 ## mean squared error = stochastic error (process variance) + estimation error
 ## standard error = sqrt(mean squared error)
-
+approx.equal <- function (x, y, tol=.Machine$double.eps^0.5) abs(x-y)<tol
 Mack.S.E <- function(MackModel, FullTriangle, est.sigma="log-linear", weights, alpha) {
   n <- ncol(FullTriangle)
   m <- nrow(FullTriangle)
@@ -135,10 +135,24 @@ Mack.S.E <- function(MackModel, FullTriangle, est.sigma="log-linear", weights, a
   sigma <- rep(0, n - 1)
   
   ## Extract estimated slopes, std. error and sigmas
-  f <- sapply(MackModel, function(x) summary(x)$coef["x","Estimate"])
-  f.se <- sapply(MackModel, function(x) summary(x)$coef["x","Std. Error"])
-  sigma <- sapply(MackModel, function(x) summary(x)$sigma)
-  
+  ## 2015-10-9 Replace lm's warning with more appropriate message
+  smmry <- suppressWarnings(lapply(MackModel, summary))
+  f <- sapply(smmry, function(x) x$coef["x","Estimate"])
+  f.se <- sapply(smmry, function(x) x$coef["x","Std. Error"])
+  sigma <- sapply(smmry, function(x) x$sigma)
+  df <- sapply(smmry, function(x) x$df[2L])
+  tolerance <- .Machine$double.eps
+  perfect.fit <- (df > 0) & (f.se < tolerance)
+  w <- which(perfect.fit)
+  if (length(w)) {
+    warn <- "Information: essentially no variation in development data for period(s):\n"
+    nms <- colnames(FullTriangle)
+    periods <- paste0("'", paste(nms[w], nms[w+1], sep = "-"), "'")
+    warn <- c(warn, paste(periods, collapse = ", "))
+    # Print warning message
+    warning(warn)
+  }
+  #   
   isna <- is.na(sigma)
   ## Think about weights!!!
   
@@ -151,10 +165,18 @@ Mack.S.E <- function(MackModel, FullTriangle, est.sigma="log-linear", weights, a
     }
     else {
       ## estimate sigma[n-1] via log-linear regression
-      sig.model <- estimate.sigma(sigma)
+      sig.model <- suppressWarnings(estimate.sigma(sigma))
       sigma <- sig.model$sigma
       
-      p.value.of.model <- summary(sig.model$model)$coefficient[2,4]
+      p.value.of.model <- tryCatch(summary(sig.model$model)$coefficient[2,4],
+                                   error = function(e) e)
+      if (inherits(p.value.of.model, "error")) {
+        warning(paste("'loglinear' model to estimate sigma_n doesn't appear appropriate.\n",
+                      "est.sigma will be overwritten to 'Mack'.\n",
+                      "Mack's estimation method will be used instead."))
+        est.sigma <- "Mack"
+      }
+      else
       if(p.value.of.model > 0.05){
         warning(paste("'loglinear' model to estimate sigma_n doesn't appear appropriate.",
                       "\np-value > 5.\n",
@@ -162,7 +184,8 @@ Mack.S.E <- function(MackModel, FullTriangle, est.sigma="log-linear", weights, a
                       "Mack's estimation method will be used instead."))
         
         est.sigma <- "Mack"
-      }else{
+      }
+      else{
         f.se[isna] <- sigma[isna]/sqrt(weights[1,isna]*FullTriangle[1,isna]^alpha[isna])
       }
     }

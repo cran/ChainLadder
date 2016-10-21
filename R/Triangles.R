@@ -71,18 +71,19 @@ as.triangle.matrix <- function(Triangle, origin="origin", dev="dev", value="valu
 }
 
 as.triangle.data.frame <- function(Triangle, origin="origin", dev="dev", value="value", ...){
-  #  d <- dim(Triangle)
-  #  if(length(d) == 2 & d[1]==d[2]){
-  #      matrixTriangle <- as.matrix(Triangle)
-  #      matrixTriangle <- as.triangle(matrixTriangle)
-  #  }else{
+
+#  isDate <- inherits(Triangle[[origin]], "Date")
+#  
+#  if (isDate) {
+#    warning("Converting origin from Date to numeric")
+#    Triangle[[origin]] <- as.numeric(Triangle[[origin]])
+#  }
   
   fmla <- as.formula(paste(origin, "~", dev))
   matrixTriangle <- acast(Triangle, fmla, fun.aggregate = sum, 
                           value.var = value, fill = as.numeric(NA))
   names(dimnames(matrixTriangle)) <- c(origin, dev)
-  #      matrixTriangle <- .as.MatrixTriangle(Triangle, origin, dev, value)
-  #  }
+
   class(matrixTriangle) <- c("triangle", "matrix")
   return(matrixTriangle)
 }
@@ -144,18 +145,54 @@ print.triangle <- function(x, ...) {
   return(z)
 }
 
+as.LongTriangle1 <- function(Triangle, varnames = names(dimnames(Triangle)), ..., 
+                           na.rm = TRUE, as.is = TRUE, value.name = "value") {
+  if (!inherits(Triangle, "matrix")) stop("asLongTriangle only works for matrices")
+  if (is.null(varnames)) varnames <- c("origin", "dev")
+  else {
+    if (is.na(varnames[1L])) varnames[1L] <- "origin"
+    if (is.na(varnames[2L])) varnames[2L] <- "dev"
+  }
+  y <- reshape2::melt(Triangle, varnames = varnames, ..., na.rm = na.rm, as.is = as.is, 
+                      value.name = value.name)
+  names(y)[1:2] <- varnames
+  y
+}
+
+as.LongTriangle <- function (Triangle, varnames = names(dimnames(Triangle)), 
+                             value.name = "value", na.rm = TRUE) {
+  if (!inherits(Triangle, "matrix")) stop("asLongTriangle only works for matrices")
+  if (is.null(varnames)) varnames <- c("origin", "dev")
+  else {
+    if (is.na(varnames[1L])) varnames[1L] <- "origin"
+    if (is.na(varnames[2L])) varnames[2L] <- "dev"
+  }
+  namecols <- setNames(expand.grid(dimnames(Triangle), KEEP.OUT.ATTRS = FALSE, 
+                                   stringsAsFactors = TRUE), varnames)
+  if (na.rm) {
+    isna <- is.na(Triangle)
+    namecols <- namecols[!isna,]
+    Triangle <- Triangle[!isna]
+  }
+  y <- cbind(namecols, setNames(data.frame(c(Triangle)), value.name))
+  #   class(y) <- c("long.triangle", "data.frame")
+  y
+}
+
 .as.LongTriangle <- function(Triangle, na.rm=FALSE){
   # 3/20/2013
   # Difference from old version: preserves names(dimnames) to be column names
-  # in the date.frame rather than forcing 'origin' and 'dev'
+  # in the data.frame rather than forcing 'origin' and 'dev'
   x <- Triangle
   nms <- names(dimnames(x))
-  .origin <- try(as.numeric(dimnames(x)[[nms[1L]]]))
-  if(class(dimnames(x)[['dev']]) %in% "character"){
-    if(.allisnumeric(dimnames(x)[['dev']])){
+  .dev <- try(as.numeric(dimnames(x)[[nms[2L]]]))
+  #  .origin <- try(as.numeric(dimnames(x)[[nms[1L]]]))
+  .origin <- dimnames(x)[[nms[1L]]]
+  if(class(dimnames(x)[[nms[2L]]]) %in% "character"){
+    if(.allisnumeric(dimnames(x)[[nms[2L]]])){
       .dev <- try(as.numeric(dimnames(x)[[nms[2L]]]))
     }else{
-      .dev <- seq(along=(dimnames(x)[['dev']]))
+      .dev <- seq(along=(dimnames(x)[[nms[2L]]]))
       warning(paste(
         c("Development period was a character and has been set to:\n",.dev), 
         collapse = " "))
@@ -163,11 +200,11 @@ print.triangle <- function(x, ...) {
   }else{
     .dev <- try(as.numeric(dimnames(x)[[nms[2L]]]))
   }
-  if(any(is.na(c(.origin, .dev)))){
-    stop(paste("The origin and dev. period columns have to be of type numeric or a character",
-               "which can be converted into numeric.\n"))
-  }
-  lx <- expand.grid(origin=.origin, dev=.dev)
+#  if(any(is.na(c(.origin, .dev)))){
+#    stop(paste("The origin and dev. period columns have to be of type numeric or a character",
+#               "which can be converted into numeric.\n"))
+#  }
+  lx <- expand.grid(origin=.origin, dev=.dev, stringsAsFactors = FALSE)
   ##    lx <- expand.grid(origin=dimnames(x)$origin, dev=dimnames(x)$dev)
   lx$value <- as.vector(x)
   if(na.rm){

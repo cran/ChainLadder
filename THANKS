@@ -17,4 +17,7 @@ Many thanks to all who provided ideas, suggestions, corrections and bug reports:
 - Giuseppe Crupi, Arthur Charpentier and Arnaud Lacoume for their contributions
   to the one year claims development result functions
 - Mario Wüthrich for guidance on the one year CDR functions
+- Ben Gorman for clarifying the documentation of weights in chainladder function
+- Mark Lee for fixing tail extrapolation in Vignette
+- Brian Fannin for fixing an issue with Triangles with Date Row.names 
 

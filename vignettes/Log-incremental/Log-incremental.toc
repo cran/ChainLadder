@@ -1,3 +1,0 @@
-\contentsline {section}{\numberline {1}Development triangles}{3}{section.1}
-\contentsline {subsection}{\numberline {1.1}Chain-ladder in the context of linear regression}{6}{subsection.1.1}
-\contentsline {subsection}{\numberline {1.2}Reserving based on log-incremental payments}{8}{subsection.1.2}

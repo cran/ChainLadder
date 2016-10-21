@@ -1,7 +1,7 @@
 import(stats)
 importFrom(ggplot2, ggplot, geom_density, facet_wrap, aes, "scale_x_continuous")
+importFrom(tweedie, rtweedie, "tweedie.profile")
 importFrom(statmod, tweedie)
-importFrom(tweedie, rtweedie)
 importFrom(systemfit, systemfit, systemfit.control)
 importFrom(methods, coerce, cbind2, rbind2 )
 importFrom(utils, packageDescription, head, setTxtProgressBar, 
@@ -16,8 +16,9 @@ importFrom(graphics, plot, abline, barplot, boxplot, hist, legend,
            axis, segments, strwidth)
 importFrom(grid, grid.layout, unit, frameGrob, placeGrob, 
            linesGrob, gpar, textGrob)
-
 importFrom(cplm, cpglm)
+importFrom(MASS, glm.nb)
+
 importClassesFrom(cplm, NullNum, NullList)
 importMethodsFrom(cplm, show, predict, vcov, residuals, resid, coef, fitted, plot, terms)
 importMethodsFrom(Matrix, summary)
@@ -32,6 +33,7 @@ export(Join2Fits, JoinFitMse, Mse, residCov, residCor)
 export(ClarkLDF, ClarkCapeCod)
 export(Table64, Table65, Table68)
 export(ata)
+export(as.LongTriangle)
 export(CLFMdelta, LRfunction)
 export(glmReserve)
 

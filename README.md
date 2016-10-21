@@ -1,5 +1,5 @@
 # ChainLadder 
-[![Travis-CI Build Status](https://travis-ci.org/mages/ChainLadder.svg?branch=master)](https://travis-ci.org/mages/ChainLadder) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/ChainLadder)](http://cran.r-project.org/package=ChainLadder) ![downloads](http://cranlogs.r-pkg.org/badges/grand-total/ChainLadder)
+[![Travis-CI Build Status](https://travis-ci.org/mages/ChainLadder.svg?branch=master)](https://travis-ci.org/mages/ChainLadder) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/ChainLadder)](https://cran.r-project.org/package=ChainLadder) ![downloads](http://cranlogs.r-pkg.org/badges/grand-total/ChainLadder)
 
 
 ChainLadder is an R package providing methods and models which are typically 
@@ -18,16 +18,16 @@ used in insurance claims reserving, including:
 ## Installation
 
 You can install the stable version from
-[CRAN](http://cran.r-project.org/package=ChainLadder):
+[CRAN](https://cran.r-project.org/package=ChainLadder):
 
 ```s
-install.packages('ChainLadder')
+install.packages('ChainLadder', dependencies = TRUE)
 ```
 
-To install the current development version from github you need the [devtools package](http://cran.r-project.org/package=devtools) and the other packages on which ChainLadder depends:
+To install the current development version from github you need the [devtools package](https://cran.r-project.org/package=devtools) and the other packages on which ChainLadder depends and links to:
 
 ```s
-install.packages(c("systemfit", "actuar", "statmod", "tweedie"))
+install.packages(c("actuar", "cplm", "grid", "ggplot2", "knitr", "lattice", "Matrix", "MASS", "reshape2", "rmarkdown", "RUnit", "systemfit",  "statmod", "tweedie"))
 ```
 
 To install ChainLadder run:
@@ -44,17 +44,15 @@ library(ChainLadder)
 demo(ChainLadder)
 ```
 
-See the ChainLadder package [vignette](http://cran.r-project.org/web/packages/ChainLadder/vignettes/ChainLadder.pdf) for more details. 
+See the ChainLadder package [vignette](https://cran.r-project.org/package=ChainLadder/vignettes/ChainLadder.pdf) for more details. 
 
 ## Citation
 
-To cite package 'ChainLadder' in publications use:
+To cite package 'ChainLadder' in publications see the output of:
+```s
+citation(package="ChainLadder")
+```
 
-  Markus Gesmann, Daniel Murphy, Wayne Zhang, Alessandro Carrato,
-  Giuseppe Crupi, Mario Wüthrich and Fabio Concina (2015). 
-  ChainLadder: Statistical methods and models for the calculation of 
-  outstanding claims reserves in general insurance. R package version 0.2.1.
-  
 See also:
 
   Markus Gesmann. Claims Reserving and IBNR. [Computational Actuarial Science

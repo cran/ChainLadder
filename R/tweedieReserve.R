@@ -64,7 +64,7 @@ tweedieReserve <- function(triangle, var.power=1, link.power=0,
   glmFit <- NULL
   glmFitB <- NULL
   glmFit1yr <- NULL
-  
+  origin <- NULL
   call <- match.call()
   if (!("triangle") %in% class(triangle))
     stop("triangle must be of class 'triangle'")
@@ -81,12 +81,19 @@ tweedieReserve <- function(triangle, var.power=1, link.power=0,
   family <- tweedie(var.power=var.power, link.power=link.power)
   
   # convert to long format
-  lda <-  as.data.frame(tr.incr)
+  lda <-  as.data.frame(tr.incr, origin = names(dimnames(tr.incr))[1], 
+                        dev = names(dimnames(tr.incr))[2])
+  names(lda)[1:3] <- c("origin", "dev", "value")
+  lda <- transform(lda, origin = factor(origin, levels = dimnames(triangle)[[1]]))
+  
   lda$offset <- if (is.null(attr(tr.incr,"exposure")))
     rep(0,nrow(lda)) else 
       family$linkfun(attr(tr.incr,"exposure")[lda$origin])
   
   #parameter fix for better intrepretation of results
+  lda$dev <- as.numeric(lda$dev)
+  lda$origin <- as.numeric(lda$origin)
+  
   base.year <- min(lda$origin)
   lda$origin <- lda$origin - base.year + 1 # ORIGIN MUST START FROM 1
   

@@ -2,8 +2,8 @@ Package: ChainLadder
 Type: Package
 Title: Statistical Methods and Models for Claims Reserving in General
         Insurance
-Version: 0.2.2
-Date: 2015-08-31
+Version: 0.2.3
+Date: 2016-10-20
 Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              email = "markus.gesmann@googlemail.com"),
              person("Daniel", "Murphy", role = "aut", 
@@ -25,15 +25,17 @@ Description: Various statistical methods and models which are
     in general insurance, including those to estimate the claims
     development result as required under Solvency II.
 Imports: Matrix, actuar, methods, stats, reshape2, lattice, grid,
-        tweedie, utils, systemfit, statmod, cplm (>= 0.7-3), ggplot2
-Suggests: RUnit, MASS
+        tweedie, utils, systemfit, statmod, cplm (>= 0.7-3), ggplot2,
+        MASS
+Suggests: RUnit, knitr, rmarkdown
+VignetteBuilder: knitr
 License: GPL (>= 2)
 URL: https://github.com/mages/ChainLadder#chainladder
 BugReports: https://github.com/mages/ChainLadder/issues
 LazyLoad: yes
 LazyData: yes
 NeedsCompilation: no
-Packaged: 2015-08-31 11:33:42 UTC; Markus
+Packaged: 2016-10-20 21:50:05 UTC; mages
 Author: Markus Gesmann [aut, cre],
   Daniel Murphy [aut],
   Yanwei (Wayne) Zhang [aut],
@@ -46,4 +48,4 @@ Author: Markus Gesmann [aut, cre],
   Fabio Concina [aut]
 Maintainer: Markus Gesmann <markus.gesmann@googlemail.com>
 Repository: CRAN
-Date/Publication: 2015-08-31 15:17:38
+Date/Publication: 2016-10-21 10:32:27

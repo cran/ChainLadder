@@ -6,7 +6,8 @@
 
 glmReserve <- function(triangle, var.power = 1, link.power = 0,
                        cum = TRUE, mse.method = c("formula", "bootstrap"), 
-                       nsim = 1000, ...){
+                       nsim = 1000, nb = FALSE, ...){
+  origin <- NULL
   call <- match.call()
   mse.method <- match.arg(mse.method)
   
@@ -25,15 +26,31 @@ glmReserve <- function(triangle, var.power = 1, link.power = 0,
   fam <- tweedie(ifelse(!is.null(var.power), var.power, 1.5), link.power)
   
   # convert to long format
-  lda <-  as.data.frame(tr.incr, origin=names(dimnames(tr.incr))[1], 
-                        dev=names(dimnames(tr.incr))[2])
+  lda <-  as.data.frame(tr.incr, origin = names(dimnames(tr.incr))[1], 
+                        dev = names(dimnames(tr.incr))[2])
   names(lda)[1:3] <- c("origin", "dev", "value")
+  lda <- transform(lda, origin = factor(origin, levels = dimnames(triangle)[[1]]))
   
   # create offset
   if (is.null(attr(tr.incr, "exposure"))) {
     lda$offset <-  rep(0, nrow(lda))
   } else {
-    lda$offset <- fam$linkfun(attr(tr.incr, "exposure")[lda$origin - min (lda$origin) + 1])
+    # Allow exposures to be expanded to the long data.frame by matching
+    #   names(exposure) with triangle's origin values, or by the arithmetic
+    #   formula that has always been there, if triangles origin values are
+    #   convertible from their character representations to numeric.
+    expo <- attr(tr.incr, "exposure")
+    if (is.null(names(expo))) names(expo) <- NA
+    if (all(names(expo) %in% lda$origin)) lda$offset <- 
+        fam$linkfun(attr(tr.incr, "exposure")[lda$origin])
+    else {
+      numorig <- suppressWarnings(as.numeric(lda$origin))
+      if (any(is.na(numorig))) stop(
+        "Unnamed exposures incompatible when triangle's origin values are not convertible from character to numeric."
+      )
+      lda$offset <- 
+        fam$linkfun(attr(tr.incr, "exposure")[numorig - min (numorig) + 1])
+    }
   }
   
   # divide data 
@@ -41,18 +58,25 @@ glmReserve <- function(triangle, var.power = 1, link.power = 0,
   ldaOut <- subset(lda, is.na(lda$value)) 
    
   # fit the model
-  if (!is.null(var.power)){
-    glmFit <- glm(value ~ factor(origin) + factor(dev), family = fam,
-              data = ldaFit, offset = offset, ...)
-    phi <- with(glmFit, sum(weights * residuals^2) / df.residual)
-  } else{ 
-    glmFit <- cpglm(value ~ factor(origin) + factor(dev),
-                  link = link.power, data = ldaFit, offset = offset, ...)
-    phi <- glmFit$phi
-    # update fam
-    fam <- tweedie(glmFit$p, link.power)
+  if (nb){
+    ldaFit$value <- round(ldaFit$value)  #warning
+    glmFit <- glm.nb(value ~ factor(origin) + factor(dev), 
+                  data = ldaFit, ...)
+    phi <- 1.0
+    fam <- glmFit$family
+  } else {
+    if (!is.null(var.power)){
+      glmFit <- glm(value ~ factor(origin) + factor(dev), family = fam,
+                data = ldaFit, offset = offset, ...)
+      phi <- with(glmFit, sum(weights * residuals^2) / df.residual)
+    } else{ 
+      glmFit <- cpglm(value ~ factor(origin) + factor(dev),
+                    link = link.power, data = ldaFit, offset = offset, ...)
+      phi <- glmFit$phi
+      # update fam
+      fam <- tweedie(glmFit$p, link.power)
+    }
   }
-
   ################################
   ## calculate reserves 
   ################################
@@ -62,7 +86,7 @@ glmReserve <- function(triangle, var.power = 1, link.power = 0,
   eta <- as.numeric(predict(glmFit, newdata = ldaOut, type = "link"))
                 
   # sum to get reserve by year
-  resMeanAy <- tapply(yp, ldaOut$origin, sum)
+  resMeanAy <- tapply(yp, factor(ldaOut$origin), sum)
   resMeanTot <- sum(resMeanAy)
 
   ################################
@@ -73,7 +97,7 @@ glmReserve <- function(triangle, var.power = 1, link.power = 0,
     
     # process variance 
     ypv <- fam$variance(yp)
-    mseProcAy <-  phi * tapply(ypv, ldaOut$origin, sum)
+    mseProcAy <-  phi * tapply(ypv, factor(ldaOut$origin), sum)
     mseProcTot <-  phi * sum(ypv) 
     
     # estimation variance                
@@ -125,23 +149,34 @@ glmReserve <- function(triangle, var.power = 1, link.power = 0,
       }
       
       # fit model on new data
-      if (!is.null(var.power)){
-        glmFitB <- glm(yB ~ factor(origin) + factor(dev),
-                        family = fam, data = ldaFit, offset = offset, ...)
-        phi <- with(glmFitB, sum(weights * residuals^2) / df.residual)
-        cf <- c(coef(glmFitB), phi, var.power)
-      } else{ 
-        glmFitB <- cpglm(yB ~ factor(origin) + factor(dev),
-                        link = link.power, data = ldaFit, offset = offset, ...)
-        cf <- c(coef(glmFitB), glmFitB$phi, glmFitB$p)
-      }      
+      if (nb){
+        yB <- round(yB)
+        glmFitB <- glm.nb(yB ~ factor(origin) + factor(dev), 
+                         data = ldaFit)
+        phi <- 1.0
+        cf <- c(coef(glmFitB), 1.0, glmFitB$theta)
+      } else {
+        if (!is.null(var.power)){
+          glmFitB <- glm(yB ~ factor(origin) + factor(dev),
+                          family = fam, data = ldaFit, offset = offset, ...)
+          phi <- with(glmFitB, sum(weights * residuals^2) / df.residual)
+          cf <- c(coef(glmFitB), phi, var.power)
+        } else{ 
+          glmFitB <- cpglm(yB ~ factor(origin) + factor(dev),
+                          link = link.power, data = ldaFit, offset = offset, ...)
+          cf <- c(coef(glmFitB), glmFitB$phi, glmFitB$p)
+        }      
+      }
       # mean and prediction
       ymB <- predict(glmFitB, newdata = ldaOut, type = "response")
-      ypB <- rtweedie(length(ymB), mu = ymB, phi = cf[nB + 1], power = cf[nB + 2])
-      
+      if (nb){
+        ypB <- rnbinom(length(ymB), size = glmFitB$theta, mu = ymB)
+      } else {
+        ypB <- rtweedie(length(ymB), mu = ymB, phi = cf[nB + 1], power = cf[nB + 2])
+      }
       # save simulations
-      resMeanAyB[i, ] <- as.numeric(tapply(ymB, ldaOut$origin, sum))      
-      resPredAyB[i, ] <- as.numeric(tapply(ypB, ldaOut$origin, sum))      
+      resMeanAyB[i, ] <- as.numeric(tapply(ymB, factor(ldaOut$origin), sum))      
+      resPredAyB[i, ] <- as.numeric(tapply(ypB, factor(ldaOut$origin), sum))      
       sims.par[i, ] <- unname(cf)
     }
     # get names
@@ -157,12 +192,12 @@ glmReserve <- function(triangle, var.power = 1, link.power = 0,
   CV <- S.E / IBNR
   Latest <- getLatestCumulative(incr2cum(tr.incr))
   Latest <- Latest[-(1:(length(Latest) - length(unique(ldaOut$origin))))]
-  Latest <- c(Latest, sum(Latest))
+  Latest <- c(Latest, total = sum(Latest))
   Ultimate <- Latest + IBNR
   resDf <- data.frame(Latest = Latest, Dev.To.Date = Latest/Ultimate,
                       Ultimate = Ultimate, IBNR = IBNR,
                       S.E = S.E, CV = CV)
-	row.names(resDf) <- c(as.character(sort(unique(ldaOut$origin))), "total")
+	row.names(resDf) <- names(Latest)
   
   # produce fullly projected triangle
   ldaOut$value <- round(yp)
@@ -205,6 +240,8 @@ residuals.glmReserve <- function(object, ...){
   r <- residuals(m, type = "pearson")
   if (class(m)[1] == "glm") {
     phi <- sum((m$weights * m$residuals^2)[m$weights > 0])/m$df.residual
+  } else if (class(m)[1] == "glm"){
+    phi <- 1
   } else {
     phi <- m$phi
   }
