@@ -11,58 +11,58 @@ lattice.options(default.theme = standard.theme(color = FALSE))
 
 
 ###################################################
-### code chunk number 2: ChainLadder.Rnw:213-214 (eval = FALSE)
+### code chunk number 2: ChainLadder.Rnw:214-215 (eval = FALSE)
 ###################################################
 ## demo(package="ChainLadder")
 
 
 ###################################################
-### code chunk number 3: ChainLadder.Rnw:217-219 (eval = FALSE)
+### code chunk number 3: ChainLadder.Rnw:218-220 (eval = FALSE)
 ###################################################
 ## library(ChainLadder)
 ## demo("demo name")
 
 
 ###################################################
-### code chunk number 4: ChainLadder.Rnw:228-229 (eval = FALSE)
+### code chunk number 4: ChainLadder.Rnw:229-230 (eval = FALSE)
 ###################################################
 ## install.packages('ChainLadder') 
 
 
 ###################################################
-### code chunk number 5: ChainLadder.Rnw:234-235
+### code chunk number 5: ChainLadder.Rnw:235-236
 ###################################################
 library(ChainLadder)
 
 
 ###################################################
-### code chunk number 6: ChainLadder.Rnw:237-238 (eval = FALSE)
+### code chunk number 6: ChainLadder.Rnw:238-239 (eval = FALSE)
 ###################################################
 ## library(ChainLadder)
 
 
 ###################################################
-### code chunk number 7: ChainLadder.Rnw:240-241
+### code chunk number 7: ChainLadder.Rnw:241-242
 ###################################################
 cat(ChainLadder:::chainladderWelcomeMessage())
 
 
 ###################################################
-### code chunk number 8: ChainLadder.Rnw:265-267 (eval = FALSE)
+### code chunk number 8: ChainLadder.Rnw:266-268 (eval = FALSE)
 ###################################################
 ## require(ChainLadder)
 ## data(package="ChainLadder")
 
 
 ###################################################
-### code chunk number 9: ChainLadder.Rnw:272-274
+### code chunk number 9: ChainLadder.Rnw:273-275
 ###################################################
 ## Sample triangle
 RAA
 
 
 ###################################################
-### code chunk number 10: ChainLadder.Rnw:301-302 (eval = FALSE)
+### code chunk number 10: ChainLadder.Rnw:302-303 (eval = FALSE)
 ###################################################
 ## plot(RAA)
 
@@ -74,7 +74,7 @@ plot(RAA)
 
 
 ###################################################
-### code chunk number 12: ChainLadder.Rnw:321-322 (eval = FALSE)
+### code chunk number 12: ChainLadder.Rnw:322-323 (eval = FALSE)
 ###################################################
 ## plot(RAA, lattice=TRUE)
 
@@ -86,13 +86,13 @@ plot(RAA, lattice=TRUE)
 
 
 ###################################################
-### code chunk number 14: ChainLadder.Rnw:342-343 (eval = FALSE)
+### code chunk number 14: ChainLadder.Rnw:343-344 (eval = FALSE)
 ###################################################
 ## ?plot.triangle
 
 
 ###################################################
-### code chunk number 15: ChainLadder.Rnw:351-357
+### code chunk number 15: ChainLadder.Rnw:352-358
 ###################################################
 raa.inc <- cum2incr(RAA)
 ## Show first origin period and its incremental development
@@ -103,7 +103,7 @@ raa.cum[1,]
 
 
 ###################################################
-### code chunk number 16: ChainLadder.Rnw:382-393 (eval = FALSE)
+### code chunk number 16: ChainLadder.Rnw:383-394 (eval = FALSE)
 ###################################################
 ## myCSVfile <- "path/to/folder/with/triangle.csv"
 ## ## Use the R command: 
@@ -119,19 +119,19 @@ raa.cum[1,]
 
 
 ###################################################
-### code chunk number 17: ChainLadder.Rnw:402-403 (eval = FALSE)
+### code chunk number 17: ChainLadder.Rnw:403-404 (eval = FALSE)
 ###################################################
 ## tri <- read.table(file="clipboard", sep="\t", na.strings="")
 
 
 ###################################################
-### code chunk number 18: ChainLadder.Rnw:414-415 (eval = FALSE)
+### code chunk number 18: ChainLadder.Rnw:415-416 (eval = FALSE)
 ###################################################
 ## demo(DatabaseExamples)
 
 
 ###################################################
-### code chunk number 19: ChainLadder.Rnw:432-438
+### code chunk number 19: ChainLadder.Rnw:433-439
 ###################################################
 filename <-  file.path(system.file("Database", 
                                    package="ChainLadder"), 
@@ -142,14 +142,14 @@ summary(myData)
 
 
 ###################################################
-### code chunk number 20: ChainLadder.Rnw:441-443
+### code chunk number 20: ChainLadder.Rnw:442-444
 ###################################################
 raa <- subset(myData, lob %in% "RAA")
 head(raa)
 
 
 ###################################################
-### code chunk number 21: ChainLadder.Rnw:449-454
+### code chunk number 21: ChainLadder.Rnw:450-455
 ###################################################
 raa.tri <- as.triangle(raa, 
                        origin="origin", 
@@ -159,14 +159,14 @@ raa.tri
 
 
 ###################################################
-### code chunk number 22: ChainLadder.Rnw:461-463
+### code chunk number 22: ChainLadder.Rnw:462-464
 ###################################################
 raa.df <- as.data.frame(raa.tri, na.rm=TRUE)
 head(raa.df)
 
 
 ###################################################
-### code chunk number 23: ChainLadder.Rnw:490-497
+### code chunk number 23: ChainLadder.Rnw:491-498
 ###################################################
 n <- 10
 f <- sapply(1:(n-1), 
@@ -178,7 +178,7 @@ f
 
 
 ###################################################
-### code chunk number 24: ChainLadder.Rnw:503-512
+### code chunk number 24: ChainLadder.Rnw:504-513
 ###################################################
 dev.period <- 1:(n-1)
 plot(log(f-1) ~ dev.period, main="Log-linear extrapolation of age-to-age factors")
@@ -192,7 +192,7 @@ f.tail
 
 
 ###################################################
-### code chunk number 25: ChainLadder.Rnw:517-520
+### code chunk number 25: ChainLadder.Rnw:518-521
 ###################################################
 plot(100*(rev(1/cumprod(rev(c(f, tail[tail>1.0001]))))), t="b",
      main="Expected claims development pattern",
@@ -200,7 +200,7 @@ plot(100*(rev(1/cumprod(rev(c(f, tail[tail>1.0001]))))), t="b",
 
 
 ###################################################
-### code chunk number 26: ChainLadder.Rnw:529-535
+### code chunk number 26: ChainLadder.Rnw:530-536
 ###################################################
 f <- c(f, f.tail)
 fullRAA <- cbind(RAA, Ult = rep(0, 10))
@@ -211,13 +211,13 @@ round(fullRAA)
 
 
 ###################################################
-### code chunk number 27: ChainLadder.Rnw:539-540
+### code chunk number 27: ChainLadder.Rnw:540-541
 ###################################################
 sum(fullRAA[ ,11] - getLatestCumulative(RAA))
 
 
 ###################################################
-### code chunk number 28: ChainLadder.Rnw:563-579
+### code chunk number 28: ChainLadder.Rnw:564-580
 ###################################################
 linkratios <- c(attr(ata(RAA), "vwtd"), tail = 1.05)
 round(linkratios, 3) # display to only three decimal places
@@ -238,7 +238,7 @@ Exhibit
 
 
 ###################################################
-### code chunk number 29: ChainLadder.Rnw:588-593
+### code chunk number 29: ChainLadder.Rnw:589-594
 ###################################################
 lmCL <- function(i, Triangle){
   lm(y~x+0, weights=1/Triangle[,i],
@@ -248,14 +248,14 @@ sapply(lapply(c(1:(n-1)), lmCL, RAA), coef)
 
 
 ###################################################
-### code chunk number 30: ChainLadder.Rnw:633-635
+### code chunk number 30: ChainLadder.Rnw:634-636
 ###################################################
 mack <- MackChainLadder(RAA, est.sigma="Mack")
 mack
 
 
 ###################################################
-### code chunk number 31: ChainLadder.Rnw:638-640
+### code chunk number 31: ChainLadder.Rnw:639-641
 ###################################################
 mack$f
 mack$FullTriangle
