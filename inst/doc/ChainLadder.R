@@ -467,7 +467,7 @@ str(auto)
 ###################################################
 f0 <- MultiChainLadder2(auto, type = "MCL")
 # show correlation- the last three columns have zero correlation
-# because separate chain ladders are used
+# because separate chain-ladders are used
 print(do.call(cbind, residCor(f0)), digits = 3)
 
 
@@ -508,7 +508,7 @@ da <- auto[1:2]
 M0 <- MultiChainLadder(da)
 # non-diagonal development matrix with no intercepts
 M1 <- MultiChainLadder2(da, type = "GMCL-int")
-# Munich Chain Ladder
+# Munich chain-ladder
 M2 <- MunichChainLadder(da[[1]], da[[2]])
 # compile results and compare projected paid to incured ratios
 r1 <- lapply(list(M0, M1), function(x){
