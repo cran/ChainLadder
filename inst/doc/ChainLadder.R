@@ -295,7 +295,15 @@ plot(mack, lattice=TRUE)
 
 
 ###################################################
-### code chunk number 36: ChainLadder.Rnw:695-706
+### code chunk number 36: ChainLadder.Rnw:694-697
+###################################################
+calPeriods <- (row(RAA) + col(RAA) - 1)
+(weights <- ifelse(calPeriods <= 5, 0, ifelse(calPeriods > 10, NA, 1)))
+MackChainLadder(RAA, weights=weights, est.sigma = "Mack")
+
+
+###################################################
+### code chunk number 37: ChainLadder.Rnw:707-718
 ###################################################
 MCLpaid
 MCLincurred
@@ -311,7 +319,7 @@ plot(MCL)
 
 
 ###################################################
-### code chunk number 37: ChainLadder.Rnw:723-727
+### code chunk number 38: ChainLadder.Rnw:735-739
 ###################################################
 ## See also the example in section 8 of England & Verrall (2002)
 ## on page 55.
@@ -320,19 +328,19 @@ B
 
 
 ###################################################
-### code chunk number 38: ChainLadder.Rnw:731-732
+### code chunk number 39: ChainLadder.Rnw:743-744
 ###################################################
 plot(B)
 
 
 ###################################################
-### code chunk number 39: ChainLadder.Rnw:738-739
+### code chunk number 40: ChainLadder.Rnw:750-751
 ###################################################
 quantile(B, c(0.75,0.95,0.99, 0.995))
 
 
 ###################################################
-### code chunk number 40: ChainLadder.Rnw:743-751
+### code chunk number 41: ChainLadder.Rnw:755-763
 ###################################################
 ## fit a distribution to the IBNR
 library(MASS)
@@ -345,46 +353,46 @@ curve(plnorm(x,fit$estimate["meanlog"], fit$estimate["sdlog"]),
 
 
 ###################################################
-### code chunk number 41: ChainLadder.Rnw:809-810
+### code chunk number 42: ChainLadder.Rnw:821-822
 ###################################################
 str(liab)
 
 
 ###################################################
-### code chunk number 42: ChainLadder.Rnw:813-815
+### code chunk number 43: ChainLadder.Rnw:825-827
 ###################################################
 liab2 <- as(liab, "triangles")
 class(liab2)
 
 
 ###################################################
-### code chunk number 43: ChainLadder.Rnw:818-819 (eval = FALSE)
+### code chunk number 44: ChainLadder.Rnw:830-831 (eval = FALSE)
 ###################################################
 ## showMethods(classes = "triangles")
 
 
 ###################################################
-### code chunk number 44: ChainLadder.Rnw:823-825
+### code chunk number 45: ChainLadder.Rnw:835-837
 ###################################################
 # use drop = TRUE to remove rows that are all NA's
 liab2[, 12:14, drop = TRUE]
 
 
 ###################################################
-### code chunk number 45: ChainLadder.Rnw:828-829
+### code chunk number 46: ChainLadder.Rnw:840-841
 ###################################################
 cbind2(liab2[1:3, 12])
 
 
 ###################################################
-### code chunk number 46: ChainLadder.Rnw:842-844
+### code chunk number 47: ChainLadder.Rnw:854-856
 ###################################################
 fit1 <- MultiChainLadder(liab, fit.method = "OLS")
 lapply(summary(fit1)$report.summary, "[", 15, )
 
 
 ###################################################
-### code chunk number 47: ChainLadder.Rnw:858-861
+### code chunk number 48: ChainLadder.Rnw:870-873
 ###################################################
 fit <- lapply(liab, MackChainLadder, est.sigma = "Mack")
 # the same as the first triangle above
@@ -392,33 +400,33 @@ lapply(fit, function(x) t(summary(x)$Totals))
 
 
 ###################################################
-### code chunk number 48: ChainLadder.Rnw:873-875
+### code chunk number 49: ChainLadder.Rnw:885-887
 ###################################################
 (B1 <- MultiChainLadder(list(GenIns), fit.method = "OLS",
     mse.method = "Independence"))
 
 
 ###################################################
-### code chunk number 49: ChainLadder.Rnw:884-886
+### code chunk number 50: ChainLadder.Rnw:896-898
 ###################################################
 fit2 <- MultiChainLadder(liab, fit.method = "SUR")
 lapply(summary(fit2)$report.summary, "[", 15, )
 
 
 ###################################################
-### code chunk number 50: ChainLadder.Rnw:893-894
+### code chunk number 51: ChainLadder.Rnw:905-906
 ###################################################
 round(unlist(residCor(fit2)), 3)
 
 
 ###################################################
-### code chunk number 51: ChainLadder.Rnw:901-902
+### code chunk number 52: ChainLadder.Rnw:913-914
 ###################################################
 do.call("rbind", coef(fit2))
 
 
 ###################################################
-### code chunk number 52: ChainLadder.Rnw:910-914 (eval = FALSE)
+### code chunk number 53: ChainLadder.Rnw:922-926 (eval = FALSE)
 ###################################################
 ## parold <- par(mfrow = c(4, 2), mar = c(4, 4, 2, 1),
 ##     mgp = c(1.3, 0.3, 0), tck = -0.02)
@@ -427,7 +435,7 @@ do.call("rbind", coef(fit2))
 
 
 ###################################################
-### code chunk number 53: MultiPlot
+### code chunk number 54: MultiPlot
 ###################################################
 parold <- par(mfrow = c(4, 2), mar = c(4, 4, 2, 1),
     mgp = c(1.3, 0.3, 0), tck = -0.02)
@@ -436,7 +444,7 @@ par(parold)
 
 
 ###################################################
-### code chunk number 54: ChainLadder.Rnw:976-980
+### code chunk number 55: ChainLadder.Rnw:988-992
 ###################################################
 require(systemfit)
 W1 <- MultiChainLadder2(liab, mse.method = "Independence",
@@ -445,7 +453,7 @@ lapply(summary(W1)$report.summary, "[", 15, )
 
 
 ###################################################
-### code chunk number 55: ChainLadder.Rnw:986-993
+### code chunk number 56: ChainLadder.Rnw:998-1005
 ###################################################
 for (i in 1:5){
   W2 <- MultiChainLadder2(liab, mse.method = "Independence",
@@ -457,13 +465,13 @@ lapply(summary(W2)$report.summary, "[", 15, )
 
 
 ###################################################
-### code chunk number 56: ChainLadder.Rnw:1012-1013
+### code chunk number 57: ChainLadder.Rnw:1024-1025
 ###################################################
 str(auto)
 
 
 ###################################################
-### code chunk number 57: ChainLadder.Rnw:1017-1021
+### code chunk number 58: ChainLadder.Rnw:1029-1033
 ###################################################
 f0 <- MultiChainLadder2(auto, type = "MCL")
 # show correlation- the last three columns have zero correlation
@@ -472,13 +480,13 @@ print(do.call(cbind, residCor(f0)), digits = 3)
 
 
 ###################################################
-### code chunk number 58: ChainLadder.Rnw:1030-1031
+### code chunk number 59: ChainLadder.Rnw:1042-1043
 ###################################################
 f1 <- MultiChainLadder2(auto, type = "MCL+int")
 
 
 ###################################################
-### code chunk number 59: Multi_resid
+### code chunk number 60: Multi_resid
 ###################################################
 parold <- par(mfrow = c(2, 3), mar = c(3, 3, 2, 1))
 mt <- list(c("Personal Paid", "Personal Incured", "Commercial Paid"))
@@ -488,20 +496,20 @@ par(parold)
 
 
 ###################################################
-### code chunk number 60: ChainLadder.Rnw:1057-1058
+### code chunk number 61: ChainLadder.Rnw:1069-1070
 ###################################################
 lapply(summary(f1, portfolio = "1+3")@report.summary, "[", 11, )
 
 
 ###################################################
-### code chunk number 61: ChainLadder.Rnw:1067-1069
+### code chunk number 62: ChainLadder.Rnw:1079-1081
 ###################################################
 ult <- summary(f1)$Ultimate
 print(ult[, 1] /ult[, 2], 3)
 
 
 ###################################################
-### code chunk number 62: ChainLadder.Rnw:1080-1096
+### code chunk number 63: ChainLadder.Rnw:1092-1108
 ###################################################
 da <- auto[1:2]
 # MCL with diagonal development
@@ -522,43 +530,43 @@ print(do.call(cbind, c(r1, list(MuCl = r2))) * 100, digits = 4)
 
 
 ###################################################
-### code chunk number 63: ChainLadder.Rnw:1148-1149
+### code chunk number 64: ChainLadder.Rnw:1160-1161
 ###################################################
 ClarkLDF(RAA)
 
 
 ###################################################
-### code chunk number 64: ChainLadder.Rnw:1159-1160
+### code chunk number 65: ChainLadder.Rnw:1171-1172
 ###################################################
 ClarkLDF(RAA, maxage = 20)
 
 
 ###################################################
-### code chunk number 65: ChainLadder.Rnw:1164-1165
+### code chunk number 66: ChainLadder.Rnw:1176-1177
 ###################################################
 ClarkLDF(RAA, G="weibull")
 
 
 ###################################################
-### code chunk number 66: LDFweibull
+### code chunk number 67: LDFweibull
 ###################################################
 plot(ClarkLDF(RAA, G="weibull"))
 
 
 ###################################################
-### code chunk number 67: ChainLadder.Rnw:1193-1194
+### code chunk number 68: ChainLadder.Rnw:1205-1206
 ###################################################
 ClarkCapeCod(RAA, Premium = 40000, G = "weibull")
 
 
 ###################################################
-### code chunk number 68: CapeCod
+### code chunk number 69: CapeCod
 ###################################################
 plot(ClarkCapeCod(RAA, Premium = 40000, G = "weibull"))
 
 
 ###################################################
-### code chunk number 69: ChainLadder.Rnw:1251-1256
+### code chunk number 70: ChainLadder.Rnw:1263-1268
 ###################################################
 # load data
 data(GenIns)
@@ -568,13 +576,13 @@ GenIns <- GenIns / 1000
 
 
 ###################################################
-### code chunk number 70: ChainLadder.Rnw:1260-1261
+### code chunk number 71: ChainLadder.Rnw:1272-1273
 ###################################################
 summary(fit1, type = "model")
 
 
 ###################################################
-### code chunk number 71: ChainLadder.Rnw:1266-1270
+### code chunk number 72: ChainLadder.Rnw:1278-1282
 ###################################################
 # Gamma GLM
 (fit2 <- glmReserve(GenIns, var.power = 2))
@@ -583,20 +591,20 @@ summary(fit1, type = "model")
 
 
 ###################################################
-### code chunk number 72: ChainLadder.Rnw:1278-1280
+### code chunk number 73: ChainLadder.Rnw:1290-1292
 ###################################################
 set.seed(11)
 (fit5 <- glmReserve(GenIns, mse.method = "boot"))
 
 
 ###################################################
-### code chunk number 73: ChainLadder.Rnw:1287-1288
+### code chunk number 74: ChainLadder.Rnw:1299-1300
 ###################################################
 names(fit5)
 
 
 ###################################################
-### code chunk number 74: ChainLadder.Rnw:1293-1297
+### code chunk number 75: ChainLadder.Rnw:1305-1309
 ###################################################
 pr <- as.data.frame(fit5$sims.reserve.pred)
 qv <- c(0.025, 0.25, 0.5, 0.75, 0.975)
@@ -605,12 +613,11 @@ print(format(round(res.q), big.mark = ","), quote = FALSE)
 
 
 ###################################################
-### code chunk number 75: ChainLadder.Rnw:1303-1312 (eval = FALSE)
+### code chunk number 76: ChainLadder.Rnw:1315-1323 (eval = FALSE)
 ###################################################
 ## library(ggplot2)
-## library(reshape2)
-## prm <- melt(pr)
-## names(prm) <- c("year", "reserve")
+## prm <- reshape(pr, varying=list(names(pr)), v.names = "reserve", 
+##                timevar = "year", direction="long")
 ## gg <- ggplot(prm, aes(reserve))
 ## gg <- gg + geom_density(aes(fill = year), alpha = 0.3) +
 ##         facet_wrap(~year, nrow = 2, scales = "free")  +
@@ -619,7 +626,7 @@ print(format(round(res.q), big.mark = ","), quote = FALSE)
 
 
 ###################################################
-### code chunk number 76: ChainLadder.Rnw:1377-1380
+### code chunk number 77: ChainLadder.Rnw:1388-1391
 ###################################################
 library(ChainLadder)
 PIC <- PaidIncurredChain(USAApaid, USAAincurred)
@@ -627,19 +634,19 @@ PIC
 
 
 ###################################################
-### code chunk number 77: ChainLadder.Rnw:1384-1385
+### code chunk number 78: ChainLadder.Rnw:1395-1396
 ###################################################
 PIC$Res.Origin
 
 
 ###################################################
-### code chunk number 78: ChainLadder.Rnw:1388-1389
+### code chunk number 79: ChainLadder.Rnw:1399-1400
 ###################################################
 PIC$Res.Tot
 
 
 ###################################################
-### code chunk number 79: ChainLadder.Rnw:1446-1449
+### code chunk number 80: ChainLadder.Rnw:1457-1460
 ###################################################
 M <- MackChainLadder(MW2014, est.sigma="Mack")
 cdrM <- CDR(M)
@@ -647,14 +654,14 @@ round(cdrM, 1)
 
 
 ###################################################
-### code chunk number 80: ChainLadder.Rnw:1454-1456
+### code chunk number 81: ChainLadder.Rnw:1465-1467
 ###################################################
 cdrAll <- CDR(M,dev="all")
 round(cdrAll, 1)
 
 
 ###################################################
-### code chunk number 81: tweedieReserve (eval = FALSE)
+### code chunk number 82: tweedieReserve (eval = FALSE)
 ###################################################
 ##  p_profile <- tweedieReserve(MW2008, p.optim=TRUE,
 ##    p.check=c(0,1.1,1.2,1.3,1.4,1.5,2,3),
@@ -672,19 +679,19 @@ round(cdrAll, 1)
 
 
 ###################################################
-### code chunk number 82: ChainLadder.Rnw:1552-1553 (eval = FALSE)
+### code chunk number 83: ChainLadder.Rnw:1563-1564 (eval = FALSE)
 ###################################################
 ## system.file("Excel", package="ChainLadder")
 
 
 ###################################################
-### code chunk number 83: ChainLadder.Rnw:1561-1562 (eval = FALSE)
+### code chunk number 84: ChainLadder.Rnw:1572-1573 (eval = FALSE)
 ###################################################
 ## system.file("SWord", package="ChainLadder")
 
 
 ###################################################
-### code chunk number 84: ChainLadder.Rnw:1567-1568 (eval = FALSE)
+### code chunk number 85: ChainLadder.Rnw:1578-1579 (eval = FALSE)
 ###################################################
 ## demo(package="ChainLadder")
 

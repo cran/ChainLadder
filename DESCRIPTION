@@ -2,14 +2,14 @@ Package: ChainLadder
 Type: Package
 Title: Statistical Methods and Models for Claims Reserving in General
         Insurance
-Version: 0.2.7
-Date: 2018-10-16
+Version: 0.2.8
+Date: 2018-11-12
 Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              email = "markus.gesmann@googlemail.com"),
              person("Daniel", "Murphy", role = "aut", 
              email="danielmarkmurphy@gmail.com"),
              person("Yanwei (Wayne)", "Zhang", role = "aut", 
-	     email="actuary_zhang@hotmail.com"),
+	         email="actuary_zhang@hotmail.com"),
              person("Alessandro", "Carrato", role = "aut", 
              email="alessandro.carrato@gmail.com"),
              person("Giuseppe", "Crupi", role="ctb",
@@ -17,7 +17,8 @@ Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              person("Christophe", "Dutang", role="ctb"),
              person("Arnaud", "Lacoume", role="ctb"),               
              person("Arthur", "Charpentier", role = "ctb"),
-             person("Mario", "Wuthrich", role = "aut"),
+             person("Mario", "Wuthrich", role = "aut",
+             email = "mario.wuethrich@math.ethz.ch"),
              person("Fabio", "Concina", role="aut",
              email="fabio.concina@gmail.com"),
              person("Eric", "Dal Moro", role="aut", 
@@ -31,9 +32,8 @@ Description: Various statistical methods and models which are
     typically used for the estimation of outstanding claims reserves
     in general insurance, including those to estimate the claims
     development result as required under Solvency II.
-Imports: Matrix, actuar, methods, stats, reshape2, lattice, grid,
-        tweedie, utils, systemfit, statmod, cplm (>= 0.7-3), ggplot2,
-        MASS
+Imports: Matrix, actuar, methods, stats, lattice, grid, tweedie, utils,
+        systemfit, statmod, cplm (>= 0.7-3), ggplot2, MASS
 Suggests: RUnit, knitr, rmarkdown
 VignetteBuilder: knitr
 License: GPL (>= 2)
@@ -42,7 +42,7 @@ BugReports: https://github.com/mages/ChainLadder/issues
 LazyLoad: yes
 LazyData: yes
 NeedsCompilation: no
-Packaged: 2018-10-16 06:28:46 UTC; mages
+Packaged: 2018-11-12 14:43:35 UTC; mages
 Author: Markus Gesmann [aut, cre],
   Daniel Murphy [aut],
   Yanwei (Wayne) Zhang [aut],
@@ -58,4 +58,4 @@ Author: Markus Gesmann [aut, cre],
   Vincent Goulet [ctb]
 Maintainer: Markus Gesmann <markus.gesmann@googlemail.com>
 Repository: CRAN
-Date/Publication: 2018-10-16 07:10:02 UTC
+Date/Publication: 2018-11-12 15:50:11 UTC
