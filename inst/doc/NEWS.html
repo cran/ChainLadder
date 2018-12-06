@@ -11,7 +11,7 @@
 
 <meta name="author" content="ChainLadder Contributors" />
 
-<meta name="date" content="2018-11-12" />
+<meta name="date" content="2018-12-06" />
 
 <title>News</title>
 
@@ -151,15 +151,21 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">News</h1>
 <h4 class="author"><em>ChainLadder Contributors</em></h4>
-<h4 class="date"><em>2018-11-12</em></h4>
+<h4 class="date"><em>2018-12-06</em></h4>
 
 </div>
 
 
+<div id="version-0.2.9-2018-12-06" class="section level1">
+<h1>Version 0.2.9 [2018-12-06]</h1>
+<ul>
+<li>Fix to as.triangle.data.frame. The labels of origin and development period were mixed up with the move away from reshape2 to aggregate in version 0.2.8. Thanks to Edward Tasker for reporting this issue.</li>
+</ul>
+</div>
 <div id="version-0.2.8-2018-11-10" class="section level1">
 <h1>Version 0.2.8 [2018-11-10]</h1>
 <ul>
-<li>Fix to print statments to align them with the generic print methods. Thanks to Markus Senn</li>
+<li>Fix to print statements to align them with the generic print methods. Thanks to Markus Senn</li>
 <li>Clarified how the ‘weights’ argument in chainladder and MackChainLadder can be used</li>
 <li>Removed dependency on reshape2 as it has been deprecated</li>
 </ul>
@@ -253,30 +259,30 @@ for (i in <span class="dv">1</span>:<span class="kw">nrow</span>(x)) {
 y$ay &lt;-<span class="st"> </span><span class="kw">cut</span>(y$lossdate, <span class="dt">breaks =</span> <span class="st">&quot;years&quot;</span>)
 <span class="co"># this summarized triangle is very similar to GenIns</span>
 <span class="kw">as.triangle</span>(y, <span class="dt">origin =</span> <span class="st">&quot;ay&quot;</span>, <span class="dt">dev =</span> <span class="st">&quot;devyear&quot;</span>, <span class="dt">value =</span> <span class="st">&quot;incurred.claims&quot;</span>)</code></pre></div>
-<pre><code>##     devyear
-## ay   2001-01-01 2002-01-01 2003-01-01 2004-01-01 2005-01-01 2006-01-01
-##   1    349741.1   352821.5   296547.8   313669.5   443940.5   391526.6
-##   2   1109368.1  1245621.0  1275881.2  1392038.3  1138787.2  1324732.3
-##   3   1737850.2  2132199.8  2198220.8  2171462.4  2190873.3  2230006.3
-##   4   2265706.4  3377061.3  3235844.4  3774168.0  2905443.7  3000719.4
-##   5   2749056.4  3820987.0  3944930.7  4035878.7  3371443.7  3742810.5
-##   6   3318464.2  4148933.3  4113276.3  4461896.8  3849587.0         NA
-##   7   3469142.3  4610188.7  4623159.1  4661351.9         NA         NA
-##   8   3549577.7  4891851.6  4900317.9         NA         NA         NA
-##   9   3769684.0  5311926.5         NA         NA         NA         NA
-##   10  3980606.4         NA         NA         NA         NA         NA
-##     devyear
-## ay   2007-01-01 2008-01-01 2009-01-01 2010-01-01
-##   1    446941.9   349330.2   369893.1   346492.8
-##   2   1292116.0  1425021.8  1368241.7         NA
-##   3   2416001.4  2844242.4         NA         NA
-##   4   3404734.0         NA         NA         NA
-##   5          NA         NA         NA         NA
-##   6          NA         NA         NA         NA
-##   7          NA         NA         NA         NA
-##   8          NA         NA         NA         NA
-##   9          NA         NA         NA         NA
-##   10         NA         NA         NA         NA</code></pre>
+<pre><code>##             devyear
+## ay                  1       2       3       4       5       6       7
+##   2001-01-01 349741.1 1109368 1737850 2265706 2749056 3318464 3469142
+##   2002-01-01 352821.5 1245621 2132200 3377061 3820987 4148933 4610189
+##   2003-01-01 296547.8 1275881 2198221 3235844 3944931 4113276 4623159
+##   2004-01-01 313669.5 1392038 2171462 3774168 4035879 4461897 4661352
+##   2005-01-01 443940.5 1138787 2190873 2905444 3371444 3849587      NA
+##   2006-01-01 391526.6 1324732 2230006 3000719 3742811      NA      NA
+##   2007-01-01 446941.9 1292116 2416001 3404734      NA      NA      NA
+##   2008-01-01 349330.2 1425022 2844242      NA      NA      NA      NA
+##   2009-01-01 369893.1 1368242      NA      NA      NA      NA      NA
+##   2010-01-01 346492.8      NA      NA      NA      NA      NA      NA
+##             devyear
+## ay                 8       9      10
+##   2001-01-01 3549578 3769684 3980606
+##   2002-01-01 4891852 5311927      NA
+##   2003-01-01 4900318      NA      NA
+##   2004-01-01      NA      NA      NA
+##   2005-01-01      NA      NA      NA
+##   2006-01-01      NA      NA      NA
+##   2007-01-01      NA      NA      NA
+##   2008-01-01      NA      NA      NA
+##   2009-01-01      NA      NA      NA
+##   2010-01-01      NA      NA      NA</code></pre>
 <p>The user is encouraged to experiment with other cut’s – e.g., <code>breaks = &quot;quarters&quot;</code> will generate accident quarter triangles.</p>
 </div>
 <div id="new-as.longtriangle-function" class="section level3">
