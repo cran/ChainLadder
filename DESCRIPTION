@@ -2,8 +2,8 @@ Package: ChainLadder
 Type: Package
 Title: Statistical Methods and Models for Claims Reserving in General
         Insurance
-Version: 0.2.9
-Date: 2018-12-06
+Version: 0.2.10
+Date: 2019-05-27
 Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              email = "markus.gesmann@googlemail.com"),
              person("Daniel", "Murphy", role = "aut", 
@@ -26,8 +26,10 @@ Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              person("Yuriy", "Krvavych", role="ctb", 
              email="y.krvavych@gmail.com"),
              person("Vincent", "Goulet", role="ctb",
-             email="vincent.goulet@act.ulaval.ca")
-             )
+             email="vincent.goulet@act.ulaval.ca"),
+             person("Marco", "De Virgilis",  role="ctb",
+             email="devirgilis.marco@gmail.com")
+             )  
 Description: Various statistical methods and models which are
     typically used for the estimation of outstanding claims reserves
     in general insurance, including those to estimate the claims
@@ -41,8 +43,9 @@ URL: https://github.com/mages/ChainLadder#chainladder
 BugReports: https://github.com/mages/ChainLadder/issues
 LazyLoad: yes
 LazyData: yes
+RoxygenNote: 6.1.1
 NeedsCompilation: no
-Packaged: 2018-12-06 09:03:32 UTC; mages
+Packaged: 2019-05-27 13:23:57 UTC; mages
 Author: Markus Gesmann [aut, cre],
   Daniel Murphy [aut],
   Yanwei (Wayne) Zhang [aut],
@@ -55,7 +58,8 @@ Author: Markus Gesmann [aut, cre],
   Fabio Concina [aut],
   Eric Dal Moro [aut],
   Yuriy Krvavych [ctb],
-  Vincent Goulet [ctb]
+  Vincent Goulet [ctb],
+  Marco De Virgilis [ctb]
 Maintainer: Markus Gesmann <markus.gesmann@googlemail.com>
 Repository: CRAN
-Date/Publication: 2018-12-06 22:40:03 UTC
+Date/Publication: 2019-05-27 13:52:15 UTC

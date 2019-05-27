@@ -4,3 +4,4 @@ DatabaseExamples   Demo showing how the ChainLadder package can be used in conne
 MackChainLadder  Detailed demo of the MackChainLadder function
 MSOffice   Demo showing how R and ChainLadder can be used for auto reporting
 MultiChainLadder Detailed demo of the MultiChainLadder function
+BS.paid.adj Detailed Demo of the B_S Paid Adjustment
