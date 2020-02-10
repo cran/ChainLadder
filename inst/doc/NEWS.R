@@ -1,16 +1,16 @@
-## ----setup, include=FALSE, echo=FALSE------------------------------------
+## ----setup, include=FALSE, echo=FALSE-----------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 suppressPackageStartupMessages(library(ChainLadder))
 
-## ----fig.width = 4, fig.height=3-----------------------------------------
+## ----fig.width = 4, fig.height=3----------------------------------------------
 x <- GenIns
 rownames(x) <- paste0(2001:2010, "-01-01")
 x
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 plot(x, lattice=TRUE)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 x <- GenInsLong
 # start off y with x's headings
 y <- x[0,]
@@ -33,18 +33,18 @@ y$ay <- cut(y$lossdate, breaks = "years")
 # this summarized triangle is very similar to GenIns
 as.triangle(y, origin = "ay", dev = "devyear", value = "incurred.claims")
 
-## ----long----------------------------------------------------------------
+## ----long---------------------------------------------------------------------
 GenLong <- as.LongTriangle(GenIns, varnames = c("accident year", "development age"),
                            value.name = "Incurred Loss")
 head(GenLong)
 
-## ----plotlong------------------------------------------------------------
+## ----plotlong-----------------------------------------------------------------
 library(ggplot2)
 ggplot(GenLong, aes(x=`development age`, y = `Incurred Loss`,
                     group = `accident year`, color = `accident year`)) +
   geom_line()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
   GenIns2 <- GenIns
   rownames(GenIns2) <- paste0(2001:2010, "-01-01")
   expos <- (7 + 1:10 * 0.4) * 10
@@ -52,10 +52,10 @@ ggplot(GenLong, aes(x=`development age`, y = `Incurred Loss`,
   attr(GenIns2, "exposure") <- expos
   glmReserve(GenIns2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 (fit6 <- glmReserve(GenIns, nb = TRUE))
 
-## ----echo = FALSE--------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 x <- matrix(byrow = TRUE, nrow = 4, ncol = 4, 
             dimnames = list(origin = LETTERS[1:4], dev = 1:4),
             data = c(
@@ -65,6 +65,6 @@ x <- matrix(byrow = TRUE, nrow = 4, ncol = 4,
               400, NA, NA, NA)
             )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 mcl <- MackChainLadder(x, est.sigma = "Mack")
 
