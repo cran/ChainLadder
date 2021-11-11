@@ -1,4 +1,4 @@
-88e308cf7d391684466463a5ce1235a5 *DESCRIPTION
+1487aa52c31cd35938eec9da619db7bf *DESCRIPTION
 818a3e74904e43861a798469c4b657a7 *NAMESPACE
 50972d36941e0942cdd0b28162c964b1 *NEWS
 5c772fcebd16ac7dc5190665c6754f37 *R/BSAdj.R
@@ -22,7 +22,7 @@ dcfbd6c4ef7f0a037b4bafddef8ce0d8 *R/clark.r
 29045d338f1480608880f4a36f6a6196 *R/zzz.R
 9da9e749e7a5dff26f4dad094800aa51 *README.md
 c768fece5a37e5cd5eaf78e32e69f718 *THANKS
-bb534c9ee1565bab75d5593bc8ebadad *build/vignette.rds
+2656c498542547276ead392ee1829383 *build/vignette.rds
 01cae939bf7f4a2d316aa39e3d38805f *data/ABC.RData
 c5ff254d69764a92bee1cc9efceaa4fd *data/AutoBI.RData
 60210db9a6f9a3410a2a5f291e7d0d8b *data/GenIns.RData
@@ -59,10 +59,10 @@ cca1c67278f40578568c59f89e75ba26 *inst/Images/MackLattice.png
 e4108981e775c4731a2bdfcbe66e6e79 *inst/Images/MunichChainLadder_MCLpaid_MCLincurred.png
 235d03c8a66a95e949bc09d0319d5e3a *inst/doc/ChainLadder.R
 aef60a4f06e41e827c219900e1060430 *inst/doc/ChainLadder.Rmd
-9d6c78483ac82943a9530544ea9c5333 *inst/doc/ChainLadder.html
+2ac4fb500ec5a5552b2d9539c7664f18 *inst/doc/ChainLadder.html
 27d4efb45b928d064f9d7715bf4a6bf2 *inst/doc/NEWS.R
-8918061415bbd6d66dbefa089ea73b4a *inst/doc/NEWS.Rmd
-1db91fbca45db18d23837ec09973a475 *inst/doc/NEWS.html
+983436946958a94cbff207593f08fb83 *inst/doc/NEWS.Rmd
+a7efa61f4c6f80595aa42172b8140441 *inst/doc/NEWS.html
 5c3dfb725419e0a329faea48ef140d03 *inst/unitTests/runTests.R
 fd10d925cbc181a14a1450799badbe9d *inst/unitTests/runit.BS.paid.adj.R
 212b2d200116001d5339aa7021de5c88 *inst/unitTests/runit.BootChainLadder.R
@@ -161,8 +161,8 @@ acae673c91aa899973c81a1a4674f1ba *man/utilityfunctions.Rd
 e16c54a0f3b0cbc5f91ad21d8c60f48b *man/vcov.clark.rd
 6dc694ea96689d907e129bc6d7884c9d *tests/doRUnit.R
 aef60a4f06e41e827c219900e1060430 *vignettes/ChainLadder.Rmd
-5c826acb5a5f56b9bef46cad523599f6 *vignettes/ChainLadder.bib
-8918061415bbd6d66dbefa089ea73b4a *vignettes/NEWS.Rmd
+1c6d28dc7266b04031a6e12185710fae *vignettes/ChainLadder.bib
+983436946958a94cbff207593f08fb83 *vignettes/NEWS.Rmd
 d8aaed8b6da8db01964da5f170156685 *vignettes/RandDatabases.png
 94ed4e31609ac10bf947d33ca6d664b8 *vignettes/SpreadsheetTriangle.png
 63b5886400f5ef389bdcca90a394ece3 *vignettes/glmReservePlot.png
