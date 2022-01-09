@@ -171,11 +171,16 @@ sapply(lapply(c(1:(n-1)), lmCL, RAA), coef)
 
 ## -----------------------------------------------------------------------------
 mack <- MackChainLadder(RAA, est.sigma="Mack")
-mack
+mack # same as summary(mack) 
 
 ## -----------------------------------------------------------------------------
 mack$f
 mack$FullTriangle
+
+## -----------------------------------------------------------------------------
+mack_smmry <- summary(mack) # See also ?summary.MackChainLadder
+mack_smmry$ByOrigin
+mack_smmry$Totals
 
 ## ----fig=TRUE, label=MackPlot1, fig.asp=1.5, fig.cap="Some residual show clear trends, indicating that the Mack assumptions are not well met"----
 plot(mack)
@@ -196,10 +201,12 @@ plot(MCLpaid)
 plot(MCLincurred)
 par(mfrow=c(1,1))
 
-## ----fig=TRUE, fig.asp=1.5----------------------------------------------------
+## -----------------------------------------------------------------------------
 # Following the example in Quarg's (2004) paper:
 MCL <- MunichChainLadder(MCLpaid, MCLincurred, est.sigmaP=0.1, est.sigmaI=0.1)
 MCL
+
+## ----fig=TRUE, fig.asp=1.5----------------------------------------------------
 plot(MCL)
 
 ## -----------------------------------------------------------------------------

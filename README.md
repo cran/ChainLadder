@@ -1,4 +1,5 @@
 # ChainLadder 
+
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/mages/ChainLadder/workflows/R-CMD-check/badge.svg)](https://github.com/mages/ChainLadder/actions)
 <!-- badges: end --> 
@@ -27,15 +28,14 @@ You can install the stable version from
 install.packages('ChainLadder', dependencies = TRUE)
 ```
 
-To install the current development version from github you can use the [devtools package](https://cran.r-project.org/package=devtools):
+You can also install the package via the Github repository:
 
-To install ChainLadder run:
 ```s
-library(devtools)
-install_github("mages/ChainLadder", dependencies = TRUE)
+# install.package("remotes") # In case you have not installed it.
+remotes::install_github("mages/ChainLadder", dependencies = TRUE)
 ```
 
-## Usage
+## Get started
 
 ```s
 library(ChainLadder)
@@ -43,7 +43,7 @@ library(ChainLadder)
 demo(ChainLadder)
 ```
 
-See the ChainLadder package [vignette](https://cran.r-project.org/package=ChainLadder) for more details. 
+See the ChainLadder package [vignette](https://mages.github.io/ChainLadder/articles/ChainLadder.html) for more details. 
 
 ## Citation
 
