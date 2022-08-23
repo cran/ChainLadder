@@ -2,8 +2,8 @@ Package: ChainLadder
 Type: Package
 Title: Statistical Methods and Models for Claims Reserving in General
         Insurance
-Version: 0.2.15
-Date: 2022-01-09
+Version: 0.2.16
+Date: 2022-08-23
 Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              email = "markus.gesmann@googlemail.com"),
              person("Daniel", "Murphy", role = "aut", 
@@ -28,7 +28,8 @@ Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              person("Vincent", "Goulet", role="ctb",
              email="vincent.goulet@act.ulaval.ca"),
              person("Marco", "De Virgilis",  role="ctb",
-             email="devirgilis.marco@gmail.com")
+             email="devirgilis.marco@gmail.com"),
+             person("Marco", "Spina",  role="ctb")
              )  
 Description: Various statistical methods and models which are
     typically used for the estimation of outstanding claims reserves
@@ -39,14 +40,13 @@ Imports: Matrix, actuar, methods, stats, lattice, grid, tweedie, utils,
 Suggests: RUnit, knitr, rmarkdown
 VignetteBuilder: knitr
 License: GPL (>= 2)
-URL: https://github.com/mages/ChainLadder,
-        https://mages.github.io/ChainLadder/
+URL: https://mages.github.io/ChainLadder/
 BugReports: https://github.com/mages/ChainLadder/issues
 LazyLoad: yes
 LazyData: yes
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2022-01-09 14:54:05 UTC; mages
+Packaged: 2022-08-23 14:31:04 UTC; mages
 Author: Markus Gesmann [aut, cre],
   Daniel Murphy [aut],
   Yanwei (Wayne) Zhang [aut],
@@ -60,7 +60,8 @@ Author: Markus Gesmann [aut, cre],
   Eric Dal Moro [aut],
   Yuriy Krvavych [ctb],
   Vincent Goulet [ctb],
-  Marco De Virgilis [ctb]
+  Marco De Virgilis [ctb],
+  Marco Spina [ctb]
 Maintainer: Markus Gesmann <markus.gesmann@googlemail.com>
 Repository: CRAN
-Date/Publication: 2022-01-09 15:32:42 UTC
+Date/Publication: 2022-08-23 15:40:02 UTC

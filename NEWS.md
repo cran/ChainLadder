@@ -1,7 +1,13 @@
+# ChainLadder 0.2.16 
+
+ * New weights argument for MuinchChainLadder
+ * Fixed typo checking for weight argument in glmReserve. Thanks to Kennedy Mwavu for reporting this issue
+ * Fixed weights in CDR.MackChainLadder. Thanks to Giorgia Chieruzzi for contributing the patch
+
 # ChainLadder 0.2.15 
 
  * Started using pkgdown to create package website 
- * Added ChainLadder heaxgon graphic
+ * Added ChainLadder hexagon graphic
  * Moved vignettes/NEWS.Rmd to NEW.md to autogenerate changelog with pkgdown
  * Clarified how to extract MackChainLadder objects in package vignette 
  
