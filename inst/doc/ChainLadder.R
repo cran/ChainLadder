@@ -304,37 +304,37 @@ print(do.call(cbind, residCor(f0)), digits = 3)
 ## -----------------------------------------------------------------------------
 f1 <- MultiChainLadder2(auto, type = "MCL+int")
 
-## ----fig = TRUE, fig.cap="Residual plots for the MCL model (first row) and the GMCL (MCL+int) model (second row) for the auto data", echo = FALSE, fig.asp = 1.2----
-parold <- par(mfrow = c(2, 3), mar = c(3, 3, 2, 1))
-mt <- list(c("Personal Paid", "Personal Incured", "Commercial Paid"))
-plot(f0, which.plot = 3, main = mt)
-plot(f1, which.plot = 3, main = mt)
-par(parold)
+## ----fig = TRUE, fig.cap="Residual plots for the MCL model (first row) and the GMCL (MCL+int) model (second row) for the auto data", echo = FALSE, fig.asp = 1.2, eval = FALSE----
+#  parold <- par(mfrow = c(2, 3), mar = c(3, 3, 2, 1))
+#  mt <- list(c("Personal Paid", "Personal Incured", "Commercial Paid"))
+#  plot(f0, which.plot = 3, main = mt)
+#  plot(f1, which.plot = 3, main = mt)
+#  par(parold)
 
-## -----------------------------------------------------------------------------
-lapply(summary(f1, portfolio = "1+3")@report.summary, "[", 11, )
+## ----eval = FALSE-------------------------------------------------------------
+#  lapply(summary(f1, portfolio = "1+3")@report.summary, "[", 11, )
 
-## -----------------------------------------------------------------------------
-ult <- summary(f1)$Ultimate
-print(ult[, 1] /ult[, 2], 3)
+## ----eval = FALSE-------------------------------------------------------------
+#  ult <- summary(f1)$Ultimate
+#  print(ult[, 1] /ult[, 2], 3)
 
-## -----------------------------------------------------------------------------
-da <- auto[1:2]
-# MCL with diagonal development
-M0 <- MultiChainLadder(da)
-# non-diagonal development matrix with no intercepts
-M1 <- MultiChainLadder2(da, type = "GMCL-int")
-# Munich chain-ladder
-M2 <- MunichChainLadder(da[[1]], da[[2]])
-# compile results and compare projected paid to incured ratios
-r1 <- lapply(list(M0, M1), function(x){
-          ult <- summary(x)@Ultimate
-          ult[, 1] / ult[, 2]
-      })
-names(r1) <- c("MCL", "GMCL")
-r2 <- summary(M2)[[1]][, 6]
-r2 <- c(r2, summary(M2)[[2]][2, 3])
-print(do.call(cbind, c(r1, list(MuCl = r2))) * 100, digits = 4)
+## ----eval = FALSE-------------------------------------------------------------
+#  da <- auto[1:2]
+#  # MCL with diagonal development
+#  M0 <- MultiChainLadder(da)
+#  # non-diagonal development matrix with no intercepts
+#  M1 <- MultiChainLadder2(da, type = "GMCL-int")
+#  # Munich chain-ladder
+#  M2 <- MunichChainLadder(da[[1]], da[[2]])
+#  # compile results and compare projected paid to incured ratios
+#  r1 <- lapply(list(M0, M1), function(x){
+#            ult <- summary(x)@Ultimate
+#            ult[, 1] / ult[, 2]
+#        })
+#  names(r1) <- c("MCL", "GMCL")
+#  r2 <- summary(M2)[[1]][, 6]
+#  r2 <- c(r2, summary(M2)[[2]][2, 3])
+#  print(do.call(cbind, c(r1, list(MuCl = r2))) * 100, digits = 4)
 
 ## -----------------------------------------------------------------------------
 ClarkLDF(RAA)

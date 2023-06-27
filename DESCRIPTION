@@ -2,8 +2,8 @@ Package: ChainLadder
 Type: Package
 Title: Statistical Methods and Models for Claims Reserving in General
         Insurance
-Version: 0.2.17
-Date: 2023-01-12
+Version: 0.2.18
+Date: 2023-06-27
 Authors@R: c(person("Markus", "Gesmann", role = c("aut", "cre"),
              email = "markus.gesmann@googlemail.com"),
              person("Daniel", "Murphy", role = "aut", 
@@ -46,7 +46,7 @@ LazyLoad: yes
 LazyData: yes
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2023-01-12 08:47:28 UTC; mages
+Packaged: 2023-06-27 11:16:44 UTC; mages
 Author: Markus Gesmann [aut, cre],
   Daniel Murphy [aut],
   Yanwei (Wayne) Zhang [aut],
@@ -64,4 +64,4 @@ Author: Markus Gesmann [aut, cre],
   Marco Spina [ctb]
 Maintainer: Markus Gesmann <markus.gesmann@googlemail.com>
 Repository: CRAN
-Date/Publication: 2023-01-12 09:43:27 UTC
+Date/Publication: 2023-06-27 11:50:02 UTC
