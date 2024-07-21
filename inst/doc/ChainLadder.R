@@ -14,7 +14,7 @@ opts_chunk$set(
 )
 suppressPackageStartupMessages(library(ChainLadder))
 
-## ---- echo=FALSE--------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 print(citation("ChainLadder"), bibtex=FALSE)
 
 ## ----eval=FALSE---------------------------------------------------------------
