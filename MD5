@@ -1,6 +1,6 @@
-393f31d103bc2d540a68ce861b2e1dec *DESCRIPTION
+95576caeb3cf106248067ae8f04d8ae7 *DESCRIPTION
 818a3e74904e43861a798469c4b657a7 *NAMESPACE
-e0977925190e561536eec9e2ca1efa9a *NEWS.md
+45cf183bce632d8af534de5fba196527 *NEWS.md
 5c772fcebd16ac7dc5190665c6754f37 *R/BSAdj.R
 f1e09a352e52ca69610f7cda83e61998 *R/BootstrapReserve.R
 6caf6d0d15ad21595c007fbe19c2b5f1 *R/CDRMethods.R
@@ -22,7 +22,7 @@ dbc71e3da08124c61e4641b321c2c8dc *R/glmReserve.R
 ef6a1da37d7ccbbef25ccd5c4c7451d2 *R/zzz.R
 0a3ce11114efe2f76a8a9943618567e9 *README.md
 437231ff763ac4051840d29cfdb76f25 *THANKS
-aa0c1ae9ab978e4f550d4ac8671c2119 *build/vignette.rds
+200d42d6fc6389943419fb285fa9c700 *build/vignette.rds
 01cae939bf7f4a2d316aa39e3d38805f *data/ABC.RData
 c5ff254d69764a92bee1cc9efceaa4fd *data/AutoBI.RData
 60210db9a6f9a3410a2a5f291e7d0d8b *data/GenIns.RData
@@ -42,10 +42,9 @@ e33a7619c52c7ae7b5c84aa5d499e494 *data/auto.RData
 88fbd1054f61fad7863833bc32333f0a *data/liab.RData
 473404fff9890191ddb123f782f38d6e *data/qincurred.RData
 bd1eacbb4d29be3ebe885f21e5af74db *data/qpaid.RData
-031d225ee7b5e17b402247534ad7e0a2 *demo/00Index
+e0654975e9f8f4028678b209d3045b19 *demo/00Index
 84b8a5059752019302f622e5c8ac1f41 *demo/BS.paid.adj.R
-0387c82d3b2b6b8e4b7fdc9d047babcb *demo/ChainLadder.R
-078fb4fb1edb407995f9cff635b58c34 *demo/DatabaseExamples.R
+a9bb818bed0e3e4cc2cc46919adf27fe *demo/ChainLadder.R
 254ca9d0f0cdcde2fc4bbe25324ff6d6 *demo/MackChainLadder.R
 6cd05a9e991b243ed5d9e765becb725a *demo/MultiChainLadder.R
 12cf3a93daf355481b4e59af58d320ca *demo/clarkDemo.R
@@ -53,9 +52,9 @@ c5b4fae91ed9dcb70ed2fb6319d9597e *inst/ChainLadder_hexagon.R
 f25d0cf45080dd855c6d1dddf902497f *inst/Database/ChainLadderTestData.mdb
 508d9b9332e6069a7c0efcc0848c0905 *inst/Database/CreateTestData.R
 6cb8aa8eb214dab7d53a0b0bb37354ba *inst/Database/TestData.csv
-0e9add349a296ae6ba4b76bcf8acaf82 *inst/doc/ChainLadder.R
-60cc8e9c6259f53798f8fe61ee85d269 *inst/doc/ChainLadder.Rmd
-3a2c56ef4c9a24c10701ea0d40ca13ca *inst/doc/ChainLadder.html
+5c9ac650a29deb4839b959cc8007dcd8 *inst/doc/ChainLadder.R
+780b56964943c08da23255d52ebcf43f *inst/doc/ChainLadder.Rmd
+6f11f6ce095490b29820e4835205be58 *inst/doc/ChainLadder.html
 5c3dfb725419e0a329faea48ef140d03 *inst/unitTests/runTests.R
 fd10d925cbc181a14a1450799badbe9d *inst/unitTests/runit.BS.paid.adj.R
 756e70ec8ec8cb1367983e5c761acc60 *inst/unitTests/runit.BootChainLadder.R
@@ -107,7 +106,7 @@ e360da632cd6d2de5711bca1dcf824a7 *man/PaidIncurredChain.Rd
 719c271cf201e8dcf804fe3e5c7885db *man/Table65.rd
 bf386941e123109b2f39fbd7c4b89fbe *man/Triangles.Rd
 24ae5de4fea28e0376b8cebbe94f69fa *man/UKMotor.Rd
-93c02efe9049cec1b16ed883dd1fa907 *man/USAA.Rd
+0932b1549f7f3374b5288d7879a1841a *man/USAA.Rd
 5cd539f74da3713510f9fbe85603aafa *man/as.LongTriangle.Rd
 a973ee264ac9517a7de5b02259edfbc3 *man/ata.rd
 ab63d1692248d90be17426d1bcab2d27 *man/auto.Rd
@@ -154,7 +153,7 @@ fdb3d658e64b82b63a86e33fb1c28a5b *man/tweedieMethods.Rd
 acae673c91aa899973c81a1a4674f1ba *man/utilityfunctions.Rd
 e16c54a0f3b0cbc5f91ad21d8c60f48b *man/vcov.clark.rd
 6dc694ea96689d907e129bc6d7884c9d *tests/doRUnit.R
-60cc8e9c6259f53798f8fe61ee85d269 *vignettes/ChainLadder.Rmd
+780b56964943c08da23255d52ebcf43f *vignettes/ChainLadder.Rmd
 97f14f4edad1e3bc5599817ef57c5570 *vignettes/ChainLadder.bib
 d8aaed8b6da8db01964da5f170156685 *vignettes/RandDatabases.png
 94ed4e31609ac10bf947d33ca6d664b8 *vignettes/SpreadsheetTriangle.png

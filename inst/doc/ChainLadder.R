@@ -18,14 +18,14 @@ suppressPackageStartupMessages(library(ChainLadder))
 print(citation("ChainLadder"), bibtex=FALSE)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  demo(package="ChainLadder")
+# demo(package="ChainLadder")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  install.packages('ChainLadder')
+# install.packages('ChainLadder')
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  library(ChainLadder)
-#  data(package="ChainLadder")
+# library(ChainLadder)
+# data(package="ChainLadder")
 
 ## ----RAAdata------------------------------------------------------------------
 RAA
@@ -48,22 +48,19 @@ raa.cum[1,]
 knitr::include_graphics("SpreadsheetTriangle.png")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  myCSVfile <- "path/to/folder/with/triangle.csv"
-#  ## Use the R command:
-#  # myCSVfile <- file.choose() to select the file interactively
-#  tri <- read.csv(file=myCSVfile, header = FALSE)
-#  ## Use read.csv2 if semicolons are used as a separator likely
-#  ## to be the case if you are in continental Europe
-#  library(ChainLadder)
-#  ## Convert to triangle
-#  tri <- as.triangle(as.matrix(tri))
-#  # Job done.
+# myCSVfile <- "path/to/folder/with/triangle.csv"
+# ## Use the R command:
+# # myCSVfile <- file.choose() to select the file interactively
+# tri <- read.csv(file=myCSVfile, header = FALSE)
+# ## Use read.csv2 if semicolons are used as a separator likely
+# ## to be the case if you are in continental Europe
+# library(ChainLadder)
+# ## Convert to triangle
+# tri <- as.triangle(as.matrix(tri))
+# # Job done.
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  tri <- read.table(file="clipboard", sep="\t", na.strings="")
-
-## ----eval=FALSE---------------------------------------------------------------
-#  demo(DatabaseExamples)
+# tri <- read.table(file="clipboard", sep="\t", na.strings="")
 
 ## -----------------------------------------------------------------------------
 filename <-  file.path(system.file("Database",
@@ -239,7 +236,7 @@ liab2 <- as(liab, "triangles")
 class(liab2)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  showMethods(classes = "triangles")
+# showMethods(classes = "triangles")
 
 ## -----------------------------------------------------------------------------
 # use drop = TRUE to remove rows that are all NA's
@@ -305,36 +302,36 @@ print(do.call(cbind, residCor(f0)), digits = 3)
 f1 <- MultiChainLadder2(auto, type = "MCL+int")
 
 ## ----fig = TRUE, fig.cap="Residual plots for the MCL model (first row) and the GMCL (MCL+int) model (second row) for the auto data", echo = FALSE, fig.asp = 1.2, eval = FALSE----
-#  parold <- par(mfrow = c(2, 3), mar = c(3, 3, 2, 1))
-#  mt <- list(c("Personal Paid", "Personal Incured", "Commercial Paid"))
-#  plot(f0, which.plot = 3, main = mt)
-#  plot(f1, which.plot = 3, main = mt)
-#  par(parold)
+# parold <- par(mfrow = c(2, 3), mar = c(3, 3, 2, 1))
+# mt <- list(c("Personal Paid", "Personal Incured", "Commercial Paid"))
+# plot(f0, which.plot = 3, main = mt)
+# plot(f1, which.plot = 3, main = mt)
+# par(parold)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  lapply(summary(f1, portfolio = "1+3")@report.summary, "[", 11, )
+# lapply(summary(f1, portfolio = "1+3")@report.summary, "[", 11, )
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  ult <- summary(f1)$Ultimate
-#  print(ult[, 1] /ult[, 2], 3)
+# ult <- summary(f1)$Ultimate
+# print(ult[, 1] /ult[, 2], 3)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  da <- auto[1:2]
-#  # MCL with diagonal development
-#  M0 <- MultiChainLadder(da)
-#  # non-diagonal development matrix with no intercepts
-#  M1 <- MultiChainLadder2(da, type = "GMCL-int")
-#  # Munich chain-ladder
-#  M2 <- MunichChainLadder(da[[1]], da[[2]])
-#  # compile results and compare projected paid to incured ratios
-#  r1 <- lapply(list(M0, M1), function(x){
-#            ult <- summary(x)@Ultimate
-#            ult[, 1] / ult[, 2]
-#        })
-#  names(r1) <- c("MCL", "GMCL")
-#  r2 <- summary(M2)[[1]][, 6]
-#  r2 <- c(r2, summary(M2)[[2]][2, 3])
-#  print(do.call(cbind, c(r1, list(MuCl = r2))) * 100, digits = 4)
+# da <- auto[1:2]
+# # MCL with diagonal development
+# M0 <- MultiChainLadder(da)
+# # non-diagonal development matrix with no intercepts
+# M1 <- MultiChainLadder2(da, type = "GMCL-int")
+# # Munich chain-ladder
+# M2 <- MunichChainLadder(da[[1]], da[[2]])
+# # compile results and compare projected paid to incured ratios
+# r1 <- lapply(list(M0, M1), function(x){
+#           ult <- summary(x)@Ultimate
+#           ult[, 1] / ult[, 2]
+#       })
+# names(r1) <- c("MCL", "GMCL")
+# r2 <- summary(M2)[[1]][, 6]
+# r2 <- c(r2, summary(M2)[[2]][2, 3])
+# print(do.call(cbind, c(r1, list(MuCl = r2))) * 100, digits = 4)
 
 ## -----------------------------------------------------------------------------
 ClarkLDF(RAA)
@@ -384,14 +381,14 @@ res.q <- t(apply(pr, 2, quantile, qv))
 print(format(round(res.q), big.mark = ","), quote = FALSE)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  library(ggplot2)
-#  prm <- reshape(pr, varying=list(names(pr)), v.names = "reserve",
-#                 timevar = "year", direction="long")
-#  gg <- ggplot(prm, aes(reserve))
-#  gg <- gg + geom_density(aes(fill = year), alpha = 0.3) +
-#          facet_wrap(~year, nrow = 2, scales = "free")  +
-#           theme(legend.position = "none")
-#  print(gg)
+# library(ggplot2)
+# prm <- reshape(pr, varying=list(names(pr)), v.names = "reserve",
+#                timevar = "year", direction="long")
+# gg <- ggplot(prm, aes(reserve))
+# gg <- gg + geom_density(aes(fill = year), alpha = 0.3) +
+#         facet_wrap(~year, nrow = 2, scales = "free")  +
+#          theme(legend.position = "none")
+# print(gg)
 
 ## ----fig.cap="The predictive distribution of loss reserves for each year based on bootstrapping", echo=FALSE----
 knitr::include_graphics("glmReservePlot.png")
@@ -416,19 +413,19 @@ cdrAll <- CDR(M,dev="all")
 round(cdrAll, 1)
 
 ## ----tweedieReserve, eval=FALSE-----------------------------------------------
-#   p_profile <- tweedieReserve(MW2008, p.optim=TRUE,
-#     p.check=c(0,1.1,1.2,1.3,1.4,1.5,2,3),
-#     design.type=c(0,1,1),
-#     rereserving=FALSE,
-#     bootstrap=0,
-#     progressBar=FALSE)
-#  # 0 1.1 1.2 1.3 1.4 1.5 2 3
-#  # ........Done.
-#  # MLE of p is between 0 and 1, which is impossible.
-#  # Instead, the MLE of p has been set to NA .
-#  # Please check your data and the call to tweedie.profile().
-#  # Error in if ((xi.max == xi.vec[1]) | (xi.max == xi.vec[length(xi.vec)])) { :
-#  # missing value where TRUE/FALSE needed
+#  p_profile <- tweedieReserve(MW2008, p.optim=TRUE,
+#    p.check=c(0,1.1,1.2,1.3,1.4,1.5,2,3),
+#    design.type=c(0,1,1),
+#    rereserving=FALSE,
+#    bootstrap=0,
+#    progressBar=FALSE)
+# # 0 1.1 1.2 1.3 1.4 1.5 2 3
+# # ........Done.
+# # MLE of p is between 0 and 1, which is impossible.
+# # Instead, the MLE of p has been set to NA .
+# # Please check your data and the call to tweedie.profile().
+# # Error in if ((xi.max == xi.vec[1]) | (xi.max == xi.vec[length(xi.vec)])) { :
+# # missing value where TRUE/FALSE needed
 
 ## ----echo=FALSE---------------------------------------------------------------
 knitr::include_graphics("tweedieReserve.png")
